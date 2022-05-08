@@ -14,6 +14,8 @@ import com.example.csc660_grpproject_where2buy.databinding.FragmentHomeBinding;
 
 public class HomeFragment extends Fragment {
 
+    Bundle bundle;
+
     private FragmentHomeBinding binding;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -24,8 +26,12 @@ public class HomeFragment extends Fragment {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
+
         final TextView textView = binding.textHome;
-        homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+        //homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+
+        bundle = getParentFragment().getActivity().getIntent().getExtras();
+        textView.setText("Hello, " + bundle.getString("userName")/* + " \nID " + bundle.getString("googleID")*/);
         return root;
     }
 
