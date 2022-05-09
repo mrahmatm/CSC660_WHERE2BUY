@@ -3,9 +3,8 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/Git Gud Scrub/CSC660_WHERE2BUY/app/src/main/res/layout/activity_login.xml" value="0.31354166666666666" />
-        <entry key="..\:/Git Gud Scrub/CSC660_WHERE2BUY/app/src/main/res/layout/activity_main.xml" value="0.31354166666666666" />
-        <entry key="..\:/Git Gud Scrub/CSC660_WHERE2BUY/app/src/main/res/layout/fragment_home.xml" value="0.5541666666666667" />
+        <entry key="..\:/-Codes/CSC660_WHERE2BUY/app/src/main/res/font/font.xml" value="0.28489583333333335" />
+        <entry key="..\:/-Codes/CSC660_WHERE2BUY/app/src/main/res/layout/activity_login.xml" value="0.2546875" />
         <entry key="..\:/Users/mrahm/AndroidStudioProjects/CSC660_GRPPROJECT_WHERE2BUY/app/src/main/res/layout/activity_main.xml" value="0.358695652173913" />
       </map>
     </option>
