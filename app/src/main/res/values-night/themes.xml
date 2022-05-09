@@ -12,7 +12,7 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
-        <item name="android:fontFamily">@font/your_font</item>
-        <item name="fontFamily">@font/your_font</item>
+        <item name="android:fontFamily">@font/metropolis_regularr</item>
+        <item name="fontFamily">@font/metropolis_regularr</item>
     </style>
 </resources>
