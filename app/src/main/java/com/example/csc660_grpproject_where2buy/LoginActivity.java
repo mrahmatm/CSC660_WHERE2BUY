@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -19,6 +20,7 @@ import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 
 public class LoginActivity extends AppCompatActivity {
+    private static final String TAG = null;
     GoogleSignInOptions gso;
     GoogleSignInClient mGoogleSignInClient;
     @Override
@@ -33,7 +35,6 @@ public class LoginActivity extends AppCompatActivity {
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
         gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken("919579181968-7gfn0b36v1f96aqan09pq2iupsqrg3te.apps.googleusercontent.com")
                 .requestEmail()
                 .build();
 
@@ -98,6 +99,7 @@ public class LoginActivity extends AppCompatActivity {
                 if(e.getStatusCode() != GoogleSignInStatusCodes.SIGN_IN_CANCELLED){
                     String statusMsg = GoogleSignInStatusCodes.getStatusCodeString(e.getStatusCode());
                     Toast.makeText(getApplicationContext(), "Something went wrong\nError Message: " + statusMsg, Toast.LENGTH_LONG).show();
+                    Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
                 }else{
                     Toast.makeText(getApplicationContext(), "Please sign in to proceed.", Toast.LENGTH_SHORT).show();
                 }
