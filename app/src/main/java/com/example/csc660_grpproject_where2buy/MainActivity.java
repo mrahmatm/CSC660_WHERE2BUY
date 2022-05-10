@@ -1,6 +1,9 @@
 package com.example.csc660_grpproject_where2buy;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.widget.Toast;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -15,6 +18,7 @@ import com.example.csc660_grpproject_where2buy.databinding.ActivityMainBinding;
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
+    boolean backButtonPressed = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,4 +38,21 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupWithNavController(binding.navView, navController);
     }
 
+    @Override
+    public void onBackPressed() {
+        if(backButtonPressed){
+            super.onBackPressed();
+            return;
+        }
+
+        this.backButtonPressed = true;
+        Toast.makeText(getApplicationContext(), "Press back button again to exit app", Toast.LENGTH_LONG).show();
+
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                backButtonPressed = false;
+            }
+        }, 2000);
+    }
 }

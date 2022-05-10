@@ -13,6 +13,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
@@ -22,7 +23,7 @@ public class LoginActivity extends AppCompatActivity {
     GoogleSignInClient mGoogleSignInClient;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        int RC_SIGN_IN = 1;
+        //int RC_SIGN_IN = 1;
 
 
         super.onCreate(savedInstanceState);
@@ -32,6 +33,7 @@ public class LoginActivity extends AppCompatActivity {
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
         gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken("919579181968-7gfn0b36v1f96aqan09pq2iupsqrg3te.apps.googleusercontent.com")
                 .requestEmail()
                 .build();
 
@@ -50,6 +52,7 @@ public class LoginActivity extends AppCompatActivity {
 
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
         if(account != null){
+            finish();
             goToMain(account);
         }
     }
@@ -91,7 +94,13 @@ public class LoginActivity extends AppCompatActivity {
                 goToMain(task.getResult());
             } catch (ApiException e) {
                 e.printStackTrace();
-                Toast.makeText(getApplicationContext(), "Something went wrong", Toast.LENGTH_SHORT).show();
+
+                if(e.getStatusCode() != GoogleSignInStatusCodes.SIGN_IN_CANCELLED){
+                    String statusMsg = GoogleSignInStatusCodes.getStatusCodeString(e.getStatusCode());
+                    Toast.makeText(getApplicationContext(), "Something went wrong\nError Message: " + statusMsg, Toast.LENGTH_LONG).show();
+                }else{
+                    Toast.makeText(getApplicationContext(), "Please sign in to proceed.", Toast.LENGTH_SHORT).show();
+                }
             }
         }
     }
