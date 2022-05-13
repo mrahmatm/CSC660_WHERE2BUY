@@ -52,31 +52,10 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
-        if(account != null){
-            finish();
-            goToMain(account);
+        if(account != null){ //if user has previously signed in
+            goToMain(account); //go straight to MainActivity
         }
     }
-
-    /*@Override
-    protected void onStart() {
-        super.onStart();
-
-        // Check for existing Google Sign In account, if the user is already signed in
-        // the GoogleSignInAccount will be non-null.
-        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
-        updateUI(account);
-    }
-
-    private void updateUI(GoogleSignInAccount account) {
-        if(account == null){ // if user has not signed in
-
-        }else{ // if user has signed in
-            // redirect to main activity
-
-            Intent i = new Intent();
-        }
-    }*/
 
     private void signIn() {
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
@@ -90,8 +69,6 @@ public class LoginActivity extends AppCompatActivity {
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
             try {
                 task.getResult(ApiException.class);
-
-                finish();
                 goToMain(task.getResult());
             } catch (ApiException e) {
                 e.printStackTrace();
@@ -108,6 +85,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void goToMain(GoogleSignInAccount acc){
+        finish(); //prevents going back to LoginActivity
         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
         intent.putExtra("googleID", acc.getId());
         intent.putExtra("userName", acc.getDisplayName());

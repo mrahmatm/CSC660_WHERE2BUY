@@ -1,14 +1,14 @@
-package com.example.csc660_grpproject_where2buy.ui.notifications;
+package com.example.csc660_grpproject_where2buy.ui.respond;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-public class NotificationsViewModel extends ViewModel {
+public class RespondViewModel extends ViewModel {
 
     private final MutableLiveData<String> mText;
 
-    public NotificationsViewModel() {
+    public RespondViewModel() {
         mText = new MutableLiveData<>();
         mText.setValue("This is notifications fragment");
     }

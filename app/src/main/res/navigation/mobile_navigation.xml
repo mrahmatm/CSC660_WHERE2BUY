@@ -3,23 +3,23 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/navigation_home">
+    app:startDestination="@+id/navigation_map">
 
     <fragment
-        android:id="@+id/navigation_home"
-        android:name="com.example.csc660_grpproject_where2buy.ui.home.HomeFragment"
-        android:label="@string/title_home"
-        tools:layout="@layout/fragment_home" />
+        android:id="@+id/navigation_map"
+        android:name="com.example.csc660_grpproject_where2buy.ui.map.MapFragment"
+        android:label="@string/title_map"
+        tools:layout="@layout/fragment_map" />
 
     <fragment
-        android:id="@+id/navigation_dashboard"
-        android:name="com.example.csc660_grpproject_where2buy.ui.dashboard.DashboardFragment"
-        android:label="@string/title_dashboard"
-        tools:layout="@layout/fragment_dashboard" />
+        android:id="@+id/navigation_request"
+        android:name="com.example.csc660_grpproject_where2buy.ui.request.RequestFragment"
+        android:label="@string/title_request"
+        tools:layout="@layout/fragment_request" />
 
     <fragment
-        android:id="@+id/navigation_notifications"
-        android:name="com.example.csc660_grpproject_where2buy.ui.notifications.NotificationsFragment"
-        android:label="@string/title_notifications"
-        tools:layout="@layout/fragment_notifications" />
+        android:id="@+id/navigation_respond"
+        android:name="com.example.csc660_grpproject_where2buy.ui.respond.RespondFragment"
+        android:label="@string/title_respond"
+        tools:layout="@layout/fragment_respond" />
 </navigation>

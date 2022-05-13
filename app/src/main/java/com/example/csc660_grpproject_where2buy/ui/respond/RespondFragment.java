@@ -1,4 +1,4 @@
-package com.example.csc660_grpproject_where2buy.ui.notifications;
+package com.example.csc660_grpproject_where2buy.ui.respond;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -10,22 +10,22 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.csc660_grpproject_where2buy.databinding.FragmentNotificationsBinding;
+import com.example.csc660_grpproject_where2buy.databinding.FragmentRespondBinding;
 
-public class NotificationsFragment extends Fragment {
+public class RespondFragment extends Fragment {
 
-    private FragmentNotificationsBinding binding;
+    private FragmentRespondBinding binding;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        NotificationsViewModel notificationsViewModel =
-                new ViewModelProvider(this).get(NotificationsViewModel.class);
+        RespondViewModel respondViewModel =
+                new ViewModelProvider(this).get(RespondViewModel.class);
 
-        binding = FragmentNotificationsBinding.inflate(inflater, container, false);
+        binding = FragmentRespondBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
         final TextView textView = binding.textNotifications;
-        notificationsViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+        respondViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
         return root;
     }
 

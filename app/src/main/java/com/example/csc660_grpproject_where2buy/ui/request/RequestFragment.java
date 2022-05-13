@@ -1,4 +1,4 @@
-package com.example.csc660_grpproject_where2buy.ui.dashboard;
+package com.example.csc660_grpproject_where2buy.ui.request;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -10,22 +10,22 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.csc660_grpproject_where2buy.databinding.FragmentDashboardBinding;
+import com.example.csc660_grpproject_where2buy.databinding.FragmentRequestBinding;
 
-public class DashboardFragment extends Fragment {
+public class RequestFragment extends Fragment {
 
-    private FragmentDashboardBinding binding;
+    private FragmentRequestBinding binding;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        DashboardViewModel dashboardViewModel =
-                new ViewModelProvider(this).get(DashboardViewModel.class);
+        RequestViewModel requestViewModel =
+                new ViewModelProvider(this).get(RequestViewModel.class);
 
-        binding = FragmentDashboardBinding.inflate(inflater, container, false);
+        binding = FragmentRequestBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
         final TextView textView = binding.textDashboard;
-        dashboardViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+        requestViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
         return root;
     }
 

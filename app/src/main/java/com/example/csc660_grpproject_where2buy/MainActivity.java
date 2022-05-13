@@ -18,11 +18,17 @@ import com.example.csc660_grpproject_where2buy.databinding.ActivityMainBinding;
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
+    static String userName, userId;
+    Bundle bundle;
     boolean backButtonPressed = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        bundle = getIntent().getExtras();
+        userName = bundle.getString("userName");
+        userId = bundle.getString("googleID");
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -31,11 +37,13 @@ public class MainActivity extends AppCompatActivity {
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications)
+                R.id.navigation_map, R.id.navigation_request, R.id.navigation_respond)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         //NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
+
+
     }
 
     @Override
@@ -54,5 +62,16 @@ public class MainActivity extends AppCompatActivity {
                 backButtonPressed = false;
             }
         }, 2000);
+    }
+
+
+    // To get these values, in fragments write as below:
+    // datatype variablename = ((MainActivity)getActivity()).methodname;
+
+    public String getUserName(){
+        return userName;
+    }
+    public String getUserId(){
+        return userId;
     }
 }
