@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.csc660_grpproject_where2buy">
 
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
@@ -10,7 +12,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.CSC660_GRPPROJECT_WHERE2BUY">
+        android:theme="@style/Theme.CSC660_GRPPROJECT_WHERE2BUY"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".LoginActivity"
             android:exported="true">
