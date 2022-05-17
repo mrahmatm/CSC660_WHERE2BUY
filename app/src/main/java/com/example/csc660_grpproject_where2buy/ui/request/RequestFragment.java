@@ -4,6 +4,10 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -24,8 +28,15 @@ public class RequestFragment extends Fragment {
         binding = FragmentRequestBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        final TextView textView = binding.textDashboard;
-        requestViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+        final TextView textView2 = binding.textView2;
+        final TextView textView3 = binding.textView3;
+        final EditText editText1 = binding.editTextTextPersonName;
+        final ImageView imageView2 = binding.imageView2;
+        final SeekBar seekBar = binding.seekBar;
+        final Button button = binding.button;
+
+//        requestViewModel.getText().observe(getViewLifecycleOwner(), textView2::setText);
+//        requestViewModel.getText().observe(getViewLifecycleOwner(), textView3::setText);
         return root;
     }
 
