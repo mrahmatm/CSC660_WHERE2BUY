@@ -26,6 +26,7 @@ import com.example.csc660_grpproject_where2buy.databinding.FragmentRespondBindin
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
@@ -126,8 +127,9 @@ public class RespondFragment extends Fragment {
         }
     };
 
-    private void getCurrentLocation(){
+    private void getCurrentLocation(){ // Get location, or do appropriate actions if needed. Called once after fragment loads and every time refresh button is pressed
         if(permissionGranted()) {
+            textView.setText("Refreshing...");
             //initialize task location
             Task<Location> task = client.getLastLocation();
             task.addOnSuccessListener(new OnSuccessListener<Location>() {
@@ -150,14 +152,14 @@ public class RespondFragment extends Fragment {
                             googleMap.addMarker(options);
                         }
                     });*/
+                        sendRequest();
                     } else {
-                        textView.setText("Unable to retrieve location.\n\nTurn on location services or try again later.");
+                        textView.setText("Unable to retrieve location.\n\nTurn on location services or try again later. 1");
                     }
                 }
             });
-            sendRequest();
         }else{
-            textView.setText("To respond to other people, we need to access your location.\n\nPlease allow the permission.");
+            textView.setText("To respond to other people, we need to access your location.\n\nPlease allow access to location services.");
             getPermission();
         }
     }
