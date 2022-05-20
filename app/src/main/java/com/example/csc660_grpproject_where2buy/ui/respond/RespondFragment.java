@@ -10,12 +10,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -26,7 +28,6 @@ import com.example.csc660_grpproject_where2buy.databinding.FragmentRespondBindin
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
@@ -34,10 +35,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class RespondFragment extends Fragment {
 
     private FragmentRespondBinding binding;
     LatLng currentLatLng;
+    float maxDistance, distanceBetween;
     FusedLocationProviderClient client;
     TextView textView;
     Button refreshBtn;
@@ -62,10 +67,9 @@ public class RespondFragment extends Fragment {
         textView = binding.textView;
         refreshBtn = binding.refreshBtn;
 
-
+        maxDistance = 200; //in km
 
         client = LocationServices.getFusedLocationProviderClient(getContext());
-
 
         queue = Volley.newRequestQueue(getContext());
         refreshBtn.setOnClickListener(new View.OnClickListener() {
@@ -75,7 +79,9 @@ public class RespondFragment extends Fragment {
             }
         });
         getCurrentLocation();
+
         return root;
+
     }
 
     private void sendRequest(){
@@ -85,20 +91,17 @@ public class RespondFragment extends Fragment {
             public void onResponse(String response) {
                 //getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
                 textView.setText(response);
-                Log.e("RESPONSE", response);
+                Log.i("RESPONSE", response);
 
                 try{
-                    JSONObject jsonObject = new JSONObject(response);
-                    statusCode = jsonObject.getString("statusCode");
-                    statusMessage = jsonObject.getString("statusMessage");
+                    JSONArray rows = new JSONArray(response);
+                    JSONObject row;
 
-
+                    statusCode = rows.getJSONObject(0).getString("statusId");
+                    statusMessage = rows.getJSONObject(0).getString("statusMessage");
                     if(statusCode.equals("600")){ // if query is successful
-                        JSONArray rows = new JSONArray(response);
-                        JSONObject row;
-
                         // retrieve data from json
-                        for(int i = 0; i < rows.length(); i++){
+                        for(int i = 1; i < rows.length(); i++){
                             row = rows.getJSONObject(i);
                             requestID = row.getInt("requestID");
                             requesterName = row.getString("requesterName");
@@ -112,7 +115,15 @@ public class RespondFragment extends Fragment {
                     e.printStackTrace();
                 }
             }
-        }, errorListener);
+        }, errorListener){ //POST values
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> params = new HashMap<>();
+                params.put("responderLat", String.valueOf(currentLatLng.latitude));
+                params.put("responderLng", String.valueOf(currentLatLng.longitude));
+                return params;
+            }
+        };
 
         if(stringRequest != null)
             queue.add(stringRequest);
@@ -152,6 +163,7 @@ public class RespondFragment extends Fragment {
                             googleMap.addMarker(options);
                         }
                     });*/
+                        //Toast.makeText(getContext(), "your latlng is " + currentLatLng.latitude + ", " + currentLatLng.latitude, Toast.LENGTH_SHORT).show();
                         sendRequest();
                     } else {
                         textView.setText("Unable to retrieve location.\n\nTurn on location services or try again later. 1");
