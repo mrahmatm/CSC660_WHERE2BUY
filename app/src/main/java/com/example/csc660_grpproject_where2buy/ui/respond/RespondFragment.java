@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -47,6 +48,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.example.csc660_grpproject_where2buy.R;
+
 public class RespondFragment extends Fragment {
 
     private FragmentRespondBinding binding;
@@ -66,6 +69,7 @@ public class RespondFragment extends Fragment {
     int requestID;
     ArrayList<RequestsNearby> requestsNearby;
     ArrayList<String> msg;
+    ListViewRespond adapter2;
 
     RequestQueue queue;
 
@@ -186,33 +190,36 @@ public class RespondFragment extends Fragment {
 
                     statusCode = statusJson.getString("statusCode");
                     statusMessage = statusJson.getString("statusMessage");
-                    if(statusCode.equals("600")){ // if query is successful and there are results
-                        RequestsNearby requestObject;
-                        adapter.clear();
-
-                        // retrieve data from json
-                        for(int i = 0; i < resultJson.length(); i++){
-                            requestID = resultJson.getJSONObject(i).getInt("requestID");
-                            itemName = resultJson.getJSONObject(i).getString("itemName");
-                            requestDateString = resultJson.getJSONObject(i).getString("requestDate");
-
-                            requestObject = new RequestsNearby(requestID, itemName, requestDateString);
-
-                            requestsNearby.add(requestObject);
-                            msg.add(i, requestsNearby.get(i).toString());
-
-                        }
-                        lv.setEnabled(true); // Re-enable to allow clicking
-                        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                            @Override
-                            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) { // TO-DO: actually do stuff onClick
-                                RequestsNearby toRespond = requestsNearby.get(i);
-
-                                Toast.makeText(getContext(), "Clicked request id " + toRespond.getRequestID() + ",\n" + toRespond.toString(), Toast.LENGTH_SHORT).show();
+                    switch (statusCode){
+                        case "600":{ // if query is successful and there are results
+                            RequestsNearby requestObject;
+                            adapter.clear();
+                            if(adapter2 != null){
+                                adapter2.clear();
                             }
-                        });
-                    }else{
-                        msg.set(0, "sumn happen idk");
+                            // retrieve data from json
+                            for(int i = 0; i < resultJson.length(); i++){
+                                requestID = resultJson.getJSONObject(i).getInt("requestID");
+                                itemName = resultJson.getJSONObject(i).getString("itemName");
+                                requestDateString = resultJson.getJSONObject(i).getString("requestDate");
+
+                                requestObject = new RequestsNearby(requestID, itemName, requestDateString);
+
+                                requestsNearby.add(requestObject);
+                                msg.add(i, requestsNearby.get(i).toString());
+
+                                //ImageButton imageButton =   R.id.respondButton;
+                                //imageButton.setOnClickListener();
+
+                            }
+                            adapter2 = new ListViewRespond(getContext(), requestsNearby);
+                            lv.setAdapter(adapter2);
+                            lv.setEnabled(true); // Re-enable to allow clicking
+                            break;
+                        } default:{
+                            msg.set(0, statusMessage);
+                            break;
+                        }
                     }
                     adapter.notifyDataSetChanged();
                 } catch (JSONException e) {
