@@ -31,6 +31,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.csc660_grpproject_where2buy.MainActivity;
 import com.example.csc660_grpproject_where2buy.RequestsNearby;
 import com.example.csc660_grpproject_where2buy.databinding.FragmentRespondBinding;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -64,13 +65,13 @@ public class RespondFragment extends Fragment {
     ListView lv;
     ArrayAdapter adapter;
 
-    final String URL = "http://www.csc660.ml/getRequestDemo.php";
     String requesterName, itemName, areaCenterString, requestDateString, statusCode, statusMessage;
     int requestID;
     ArrayList<RequestsNearby> requestsNearby;
     ArrayList<String> msg;
     ListViewRespond adapter2;
 
+    final String URL = "http://www.csc660.ml/getRequestList.php";
     RequestQueue queue;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -99,7 +100,7 @@ public class RespondFragment extends Fragment {
         textView.setAllCaps(true);
         textView.setTextSize(20);
 
-        // found on https://stackoverflow.com/a/66552678
+        // Get permission found on https://stackoverflow.com/a/66552678
         mPermissionResult = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
                 new ActivityResultCallback<Boolean>() {
@@ -212,9 +213,11 @@ public class RespondFragment extends Fragment {
                                 //imageButton.setOnClickListener();
 
                             }
-                            adapter2 = new ListViewRespond(getContext(), requestsNearby);
-                            lv.setAdapter(adapter2);
-                            lv.setEnabled(true); // Re-enable to allow clicking
+                            if(getView() != null){ // only do setAdapter if getView != null to prevent crashing if user switches between fragments quickly
+                                adapter2 = new ListViewRespond(getContext(), requestsNearby, ((MainActivity)getActivity()).getUserId());
+                                lv.setAdapter(adapter2);
+                                lv.setEnabled(true); // Re-enable to allow clicking
+                            }
                             break;
                         } default:{
                             msg.set(0, statusMessage);
@@ -227,9 +230,9 @@ public class RespondFragment extends Fragment {
                     msg.add(0, msg.get(0) + "\n\nJSONException: " + e.getMessage());
                 }
             }
-        }, errorListener){ //POST values
+        }, errorListener){ //POST parameters
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
+            protected Map<String, String> getParams(){
                 Map<String, String> params = new HashMap<>();
                 params.put("responderLat", String.valueOf(currentLatLng.latitude));
                 params.put("responderLng", String.valueOf(currentLatLng.longitude));
@@ -259,4 +262,5 @@ public class RespondFragment extends Fragment {
         super.onDestroyView();
         binding = null;
     }
+
 }

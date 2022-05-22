@@ -24,6 +24,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_weight="0"
+            android:backgroundTint="@color/purple_200"
             app:srcCompat="@drawable/ic_baseline_keyboard_arrow_right_24" />
     </LinearLayout>
 
