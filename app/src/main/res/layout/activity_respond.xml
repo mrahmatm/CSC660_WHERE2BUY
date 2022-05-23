@@ -2,43 +2,63 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Theme.MaterialComponents.DayNight"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#D8DFFE"
     tools:context=".ui.respond.RespondActivity">
 
-    <TextView
-        android:id="@+id/respondTitle"
-        android:layout_width="match_parent"
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/respondToolbar"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
-        android:layout_marginBottom="69dp"
-        android:gravity="center"
-        android:text="Item Name"
-        app:layout_constraintBottom_toTopOf="@+id/respondMap"
+        android:background="?attr/colorPrimary"
+        android:minHeight="?attr/actionBarSize"
+        android:theme="?attr/actionBarTheme"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
+        android:id="@+id/respondActivityTitle"
+        android:layout_width="411dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:gravity="center"
+        android:text="REPORT AVAILABLE"
+        app:layout_constraintTop_toBottomOf="@+id/respondMap"
+        tools:layout_editor_absoluteX="0dp" />
+
+    <TextView
+        android:id="@+id/respondNameTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:gravity="center"
+        android:text="Item Name:"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/respondToolbar" />
+
+    <TextView
         android:id="@+id/respondItemName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
         android:gravity="center"
-        android:text="Item name goes here"
+        android:text="Getting data..."
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/respondTitle" />
+        app:layout_constraintTop_toBottomOf="@+id/respondNameTitle" />
 
     <com.google.android.gms.maps.MapView
         android:id="@+id/respondMap"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginBottom="272dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_height="246dp"
+        android:layout_marginTop="20dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/respondTitle"
+        app:layout_constraintTop_toBottomOf="@+id/respondItemName"
         tools:context=".ui.respond.RespondActivity" />
 
     <Button
@@ -46,22 +66,24 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
+        android:layout_marginTop="115dp"
         android:layout_marginEnd="10dp"
+        android:layout_marginBottom="116dp"
         android:backgroundTint="@color/quantum_deeppurple"
         android:text="Send"
-        app:layout_constraintBaseline_toBaselineOf="@+id/respondBackBtn"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/respondBackBtn"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/respondRefreshBtn" />
 
     <Button
         android:id="@+id/respondBackBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="115dp"
         android:backgroundTint="@android:color/darker_gray"
         android:text="Go Back"
         android:textColor="@color/black"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBaseline_toBaselineOf="@+id/sendResponseBtn"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/sendResponseBtn" />
 
@@ -70,7 +92,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="6dp"
-        android:layout_marginBottom="7dp"
+        android:layout_marginBottom="6dp"
         android:backgroundTint="@color/purple_200"
         android:clickable="true"
         app:layout_constraintBottom_toBottomOf="@+id/respondMap"

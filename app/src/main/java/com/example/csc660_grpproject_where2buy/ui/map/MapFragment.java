@@ -14,8 +14,6 @@ import com.example.csc660_grpproject_where2buy.MainActivity;
 import com.example.csc660_grpproject_where2buy.databinding.FragmentMapBinding;
 
 public class MapFragment extends Fragment {
-
-
     private FragmentMapBinding binding;
     String userName, userID;
 
@@ -29,8 +27,9 @@ public class MapFragment extends Fragment {
 
         final TextView textView = binding.textHome;
 
-        userName = ((MainActivity)getActivity()).getUserName();
-        userID = ((MainActivity)getActivity()).getUserId();
+        // get values
+        userName = MainActivity.getUserName();
+        userID = MainActivity.getUserId();
 
         textView.setText("Hello, " + userName);
         return root;

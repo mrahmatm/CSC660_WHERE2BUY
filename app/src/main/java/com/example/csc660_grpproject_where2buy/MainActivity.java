@@ -1,5 +1,6 @@
 package com.example.csc660_grpproject_where2buy;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -20,9 +21,9 @@ import androidx.navigation.ui.NavigationUI;
 import com.example.csc660_grpproject_where2buy.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
+    private static String userName, userID;
 
     private ActivityMainBinding binding;
-    static String userName, userId;
     Bundle bundle;
     boolean backButtonPressed = false;
     TextView title;
@@ -33,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
 
         bundle = getIntent().getExtras();
         userName = bundle.getString("userName");
-        userId = bundle.getString("googleID");
+        userID = bundle.getString("googleID");
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -76,13 +77,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    // To get these values, in fragments write as below:
-    // datatype variablename = ((MainActivity)getActivity()).methodname;
-
-    public String getUserName(){
+    /**To get these values, in fragments:
+     *
+     *      in onCreateView():
+     *          varName = MainActivity.getX();
+     *          varName2 = MainActivity.getY();
+     *          varName3 = ...
+     *
+     *      for sample code, see MapFragment.java
+     */
+    public static String getUserName(){
         return userName;
     }
-    public String getUserId(){
-        return userId;
+    public static String getUserId(){
+        return userID;
     }
 }

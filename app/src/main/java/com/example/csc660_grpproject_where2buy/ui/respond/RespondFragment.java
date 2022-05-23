@@ -52,13 +52,15 @@ import java.util.Map;
 import com.example.csc660_grpproject_where2buy.R;
 
 public class RespondFragment extends Fragment {
-
     private FragmentRespondBinding binding;
     LatLng currentLatLng;
     float maxDistance, distanceBetween;
     FusedLocationProviderClient client;
 
     ActivityResultLauncher<String> mPermissionResult;
+
+    //logged in user data
+    private String userID;
 
     TextView textView;
     FloatingActionButton refreshBtn;
@@ -85,6 +87,7 @@ public class RespondFragment extends Fragment {
         //final TextView textView = binding.textNotifications;
         //respondViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
 
+        userID = MainActivity.getUserId();
 
         textView = binding.textView;
         refreshBtn = binding.refreshBtn;
@@ -146,25 +149,9 @@ public class RespondFragment extends Fragment {
                         currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
                         sendRequest();
 
-                        //textView.setText("location is " + location.getLatitude() + ", " + location.getLongitude());
-                        //sync map
-                        /*supportMapFragment.getMapAsync(new OnMapReadyCallback() {
-                            @Override
-                            public void onMapReady(GoogleMap googleMap) {
-                                //initialize lat lng
-                                LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-                                //create marker options
-                                MarkerOptions options = new MarkerOptions().position(latLng).title("I am here");
-                                //zoom map scale 15
-                                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
-                                googleMap.addMarker(options);
-                            }
-                        });*/
-                        //Toast.makeText(getContext(), "your latlng is " + currentLatLng.latitude + ", " + currentLatLng.latitude, Toast.LENGTH_SHORT).show();
                     } else {
                         msg.set(0, "Unable to retrieve location.\n\nTurn on location services or try again later.");
                         adapter.notifyDataSetChanged();
-                        //textView.setText("Unable to retrieve location.\n\nTurn on location services or try again later.");
                     }
                 }
             });
@@ -213,8 +200,8 @@ public class RespondFragment extends Fragment {
                                 //imageButton.setOnClickListener();
 
                             }
-                            if(getView() != null){ // only do setAdapter if getView != null to prevent crashing if user switches between fragments quickly
-                                adapter2 = new ListViewRespond(getContext(), requestsNearby, ((MainActivity)getActivity()).getUserId());
+                            if(getView() != null){ // only do setAdapter if getView != null to prevent crashing if user switches between fragments too quickly
+                                adapter2 = new ListViewRespond(getContext(), requestsNearby, userID);
                                 lv.setAdapter(adapter2);
                                 lv.setEnabled(true); // Re-enable to allow clicking
                             }

@@ -17,6 +17,9 @@ import com.example.csc660_grpproject_where2buy.RequestsNearby;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
+/**
+ * Class is called in RespondFragment in sendRequest()
+ */
 public class ListViewRespond extends ArrayAdapter<RequestsNearby> {
     private final Context context;
     ArrayList<RequestsNearby> requests;

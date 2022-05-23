@@ -5,14 +5,15 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -38,14 +39,12 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.libraries.places.api.Places;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.json.JSONArray;
@@ -57,38 +56,48 @@ import java.util.Map;
 
 public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCallback */{
     // xml vars
-    private TextView itemNameText;
+    private TextView title, itemNameText;
     private Button sendBtn, cancelBtn;
     private MapView mapView;
     private FloatingActionButton refreshBtn;
+    private Toolbar toolbar;
 
     // location vars
     private FusedLocationProviderClient client;
     private ActivityResultLauncher<String> mPermissionResult;
-    private static final String MAPVIEW_BUNDLE_KEY = "MapViewBundleKey";
     private LatLng currentLatLng;
     private GoogleMap map;
-    private SupportMapFragment supportMapFragment;
 
     // backend communication vars
-    private final String URL = "http://www.csc660.ml/getRequest.php";
+    private final String getItemDetailsURL = "http://www.csc660.ml/getRequest.php";
+    private final String addResponseURL = "http://www.csc660.ml/addRespond.php";
     private RequestQueue queue;
 
     // normal vars
     private String requestDateString, itemName, statusCode, statusMessage;
     private int requestID, responderID;
 
-    //private RequestsNearby requestObject;
+    ActionBar actionBar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState){
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_respond);
 
+        toolbar = findViewById(R.id.respondToolbar);
+        setSupportActionBar(toolbar);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                finish();
+            }
+        });
+        actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setTitle("Report Available");
 
         mapView = findViewById(R.id.respondMap);
         mapView.onCreate(savedInstanceState);
-        //mapView.onResume();
         mapView.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(@NonNull GoogleMap googleMap) {
@@ -98,8 +107,19 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
 
         client = LocationServices.getFusedLocationProviderClient(getApplicationContext());
 
+        title = findViewById(R.id.respondActivityTitle);
+        //title.setTextSize(16);
+        title.setText("Select the place where this item is in stock");
+
         itemNameText = findViewById(R.id.respondItemName);
         sendBtn = findViewById(R.id.sendResponseBtn);
+        sendBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                sendPOST();
+            }
+        });
+
         refreshBtn = findViewById(R.id.respondRefreshBtn);
         refreshBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -108,33 +128,17 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
             }
         });
 
-
         // Get permission found on https://stackoverflow.com/a/66552678
         mPermissionResult = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
                 new ActivityResultCallback<Boolean>() {
                     @Override
                     public void onActivityResult(Boolean result) {
-                        if(result){ // If permission is granted
-
-                            sendBtn.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    //Toast.makeText(RespondActivity.this, "lmao xd", Toast.LENGTH_SHORT).show();
-                                    Intent i = new Intent(getApplicationContext(), AddResponse.class);
-                                    //i.putExtra("storeID", );
-                                }
-                            });
-                        }else{ //if permission is rejected
+                        if(!result){ //if permission is rejected
                             // toast or something
                             // make submit button say please enable location
-                            Toast.makeText(RespondActivity.this, "Please enable location services, then refresh the map", Toast.LENGTH_SHORT).show();
-                            sendBtn.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    Toast.makeText(RespondActivity.this, "Please enable location services, then refresh the map", Toast.LENGTH_SHORT).show();
-                                }
-                            });
+                            Toast.makeText(getApplicationContext(), "Please enable location services, then refresh the map", Toast.LENGTH_SHORT).show();
+                            Log.i("CUSTOM", "onClick: denied clicked");
                         }
                     }
                 }
@@ -148,10 +152,7 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
             }
         });
 
-
         queue = Volley.newRequestQueue(getApplicationContext());
-
-
         Bundle extras = getIntent().getExtras();
         if (extras == null) {
             Toast.makeText(this, "An error occurred.", Toast.LENGTH_SHORT).show();
@@ -162,15 +163,16 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
 
             getCurrentLocation();
             //Toast.makeText(this, "requestID " + requestID, Toast.LENGTH_SHORT).show();
-            sendPOST();
+            //sendPOST();
         }
+
+        getItemDetails();
     }
 
     private void refreshMap() {
         Toast.makeText(this, "Getting location...", Toast.LENGTH_SHORT).show();
         getCurrentLocation();
     }
-
 
     private void getCurrentLocation(){
         if(permissionGranted()){
@@ -203,48 +205,66 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
         }
     }
 
-    private void sendPOST() {
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                try {
-                    JSONObject rows = new JSONObject(response);
-                    JSONObject statusJson = rows.getJSONObject("status");
-                    JSONArray resultJson = rows.getJSONArray("result");
+    private void sendPOST(){
+        if(permissionGranted()){
+            if(currentLatLng != null) {
+                Toast.makeText(this, "dummy POST", Toast.LENGTH_SHORT).show();
 
-                    statusCode = statusJson.getString("statusCode");
-                    statusMessage = statusJson.getString("statusMessage");
-                    switch (statusCode) {
-                        case "600": { // if query is successful and there are results
-                            // retrieve data from json
-                            requestID = resultJson.getJSONObject(0).getInt("requestID");
-                            itemName = resultJson.getJSONObject(0).getString("itemName");
-                            requestDateString = resultJson.getJSONObject(0).getString("requestDate");
+                StringRequest stringRequest = new StringRequest(Request.Method.POST, addResponseURL, new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
 
-                            //requestObject = new RequestsNearby(requestID, itemName, requestDateString);
-
-                            itemNameText.setText(itemName);
-                            Log.i("CUSTOM", "code 600");
-                            break;
-                        }
-                        default: {
-                            Log.i("CUSTOM", "code something else");
-                            break;
-                        }
                     }
-                    // activityRespondText.setText(requestObject.toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    Log.e("CUSTOM", "JSONException: " + e.getMessage());
-                    //activityRespondText.setText(response + "\n\nJSONError: " + e.getMessage());
-                }
+                }, errorListener);
             }
-        }, errorListener) { //POST parameters
+            else{
+                Toast.makeText(this, "Unable to get location. Please try again later.", Toast.LENGTH_SHORT).show();
+            }
+        }else{ // if location permission is denied
+            Toast.makeText(this, "", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void getItemDetails() {
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, getItemDetailsURL, new Response.Listener<String>() {
+        @Override
+        public void onResponse(String response) {
+            try {
+                JSONObject rows = new JSONObject(response);
+                JSONObject statusJson = rows.getJSONObject("status");
+                JSONArray resultJson = rows.getJSONArray("result");
+
+                statusCode = statusJson.getString("statusCode");
+                statusMessage = statusJson.getString("statusMessage");
+                switch (statusCode) {
+                    case "600": { // if query is successful and there are results
+                        // retrieve data from json
+                        requestID = resultJson.getJSONObject(0).getInt("requestID");
+                        itemName = resultJson.getJSONObject(0).getString("itemName");
+                        requestDateString = resultJson.getJSONObject(0).getString("requestDate");
+
+                        //requestObject = new RequestsNearby(requestID, itemName, requestDateString);
+
+                        itemNameText.setText(itemName);
+                        Log.i("CUSTOM", "code 600");
+                        break;
+                    }
+                    default: {
+                        Log.i("CUSTOM", "code something else");
+                        break;
+                    }
+                }
+                // activityRespondText.setText(requestObject.toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+                Log.e("CUSTOM", "JSONException: " + e.getMessage());
+                //activityRespondText.setText(response + "\n\nJSONError: " + e.getMessage());
+            }
+        }}, errorListener) { //POST parameters
             @Nullable
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
-                params.put("responderID", String.valueOf(responderID));
                 params.put("requestID", String.valueOf(requestID));
                 return params;
             }
@@ -263,14 +283,13 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
         }
     };
 
-
     private boolean permissionGranted() {
         return ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
     private void getPermission() {
         mPermissionResult.launch(Manifest.permission.ACCESS_FINE_LOCATION);
     }
-    /*@Override*/
+
     public void customOnMapReady(@NonNull GoogleMap googleMap) {
         map = googleMap;
 
@@ -298,8 +317,8 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
     }
 
     @Override
-    protected void onResume() {
-        mapView.onResume(); // Override to update mapView onResume
+    protected void onResume() { // Override to also update mapView on resume
+        mapView.onResume(); // without this here, mapView will only update when it is tapped instead of constantly updating
         super.onResume();
     }
 }
