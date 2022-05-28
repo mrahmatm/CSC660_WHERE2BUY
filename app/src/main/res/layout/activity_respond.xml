@@ -12,22 +12,21 @@
         android:id="@+id/respondToolbar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="?attr/colorPrimary"
+        android:background="@color/custom_purple_900"
         android:minHeight="?attr/actionBarSize"
         android:theme="?attr/actionBarTheme"
+        app:titleTextColor="@color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
+    <!--TextView
         android:id="@+id/respondActivityTitle"
         android:layout_width="411dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
         android:gravity="center"
         android:text="REPORT AVAILABLE"
-        app:layout_constraintTop_toBottomOf="@+id/respondMap"
-        tools:layout_editor_absoluteX="0dp" />
+        tools:layout_editor_absoluteY="400dp" /-->
 
     <TextView
         android:id="@+id/respondNameTitle"
@@ -42,7 +41,7 @@
 
     <TextView
         android:id="@+id/respondItemName"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
         android:gravity="center"
@@ -53,38 +52,39 @@
 
     <com.google.android.gms.maps.MapView
         android:id="@+id/respondMap"
-        android:layout_width="0dp"
-        android:layout_height="246dp"
-        android:layout_marginTop="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginStart="0dp"
+        android:layout_marginTop="57dp"
+        android:layout_marginEnd="1dp"
+        android:layout_marginBottom="59dp"
+        app:layout_constraintBottom_toBottomOf="@+id/textView6"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/respondItemName"
+        app:layout_constraintTop_toTopOf="@+id/respondNameTitle"
         tools:context=".ui.respond.RespondActivity" />
 
     <Button
         android:id="@+id/sendResponseBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginTop="115dp"
-        android:layout_marginEnd="10dp"
-        android:layout_marginBottom="116dp"
-        android:backgroundTint="@color/quantum_deeppurple"
+        android:layout_marginStart="76dp"
+        android:backgroundTint="@color/custom_purple_500"
         android:text="Send"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/respondBackBtn"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/respondRefreshBtn" />
+        app:layout_constraintBaseline_toBaselineOf="@+id/respondBackBtn"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/respondBackBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="120dp"
         android:backgroundTint="@android:color/darker_gray"
         android:text="Go Back"
         android:textColor="@color/black"
-        app:layout_constraintBaseline_toBaselineOf="@+id/sendResponseBtn"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.503"
         app:layout_constraintStart_toEndOf="@+id/sendResponseBtn" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -92,12 +92,52 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="6dp"
-        android:layout_marginBottom="6dp"
-        android:backgroundTint="@color/purple_200"
+        android:layout_marginBottom="7dp"
+        android:backgroundTint="@color/custom_purple_300"
         android:clickable="true"
         app:layout_constraintBottom_toBottomOf="@+id/respondMap"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/ic_baseline_my_location_24" />
+
+    <TextView
+        android:id="@+id/textView6"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="220dp"
+        android:gravity="center"
+        android:text="Location"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/toggleTextLeft"
+        android:layout_width="wrap_content"
+        android:layout_height="26dp"
+        android:layout_marginStart="69dp"
+        android:gravity="center_vertical"
+        android:text="Current Location"
+        app:layout_constraintBaseline_toBaselineOf="@+id/respondSwitch"
+        app:layout_constraintStart_toStartOf="@+id/textView6" />
+
+    <Switch
+        android:id="@+id/respondSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:showText="false"
+        android:textColor="#4d4d4d"
+        app:layout_constraintStart_toEndOf="@+id/toggleTextLeft"
+        app:layout_constraintTop_toBottomOf="@+id/textView6"
+        tools:ignore="UseSwitchCompatOrMaterialXml" />
+
+    <TextView
+        android:id="@+id/toggleTextRight"
+        android:layout_width="wrap_content"
+        android:layout_height="26dp"
+        android:gravity="center_vertical"
+        android:text="Selected Location"
+        app:layout_constraintBaseline_toBaselineOf="@+id/respondSwitch"
+        app:layout_constraintStart_toEndOf="@+id/respondSwitch" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -43,6 +43,7 @@
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="17dp"
         android:clickable="true"
+        android:backgroundTint="@color/custom_purple_300"
         android:src="@drawable/ic_baseline_refresh_24"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />

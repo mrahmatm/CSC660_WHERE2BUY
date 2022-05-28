@@ -23,6 +23,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,10 +43,12 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -61,12 +64,15 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
     private MapView mapView;
     private FloatingActionButton refreshBtn;
     private Toolbar toolbar;
+    private Switch toggleSwitch;
 
     // location vars
     private FusedLocationProviderClient client;
     private ActivityResultLauncher<String> mPermissionResult;
     private LatLng currentLatLng;
     private GoogleMap map;
+    private Marker selectedLocation;
+    private MarkerOptions markerOptions;
 
     // backend communication vars
     private final String getItemDetailsURL = "http://www.csc660.ml/getRequest.php";
@@ -76,6 +82,7 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
     // normal vars
     private String requestDateString, itemName, statusCode, statusMessage;
     private int requestID, responderID;
+    private View view;
 
     ActionBar actionBar;
 
@@ -84,6 +91,7 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_respond);
 
+        view = getWindow().findViewById(android.R.id.content);
         toolbar = findViewById(R.id.respondToolbar);
         setSupportActionBar(toolbar);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
@@ -104,12 +112,13 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
                 customOnMapReady(googleMap);
             }
         });
+        selectedLocation = null;
 
         client = LocationServices.getFusedLocationProviderClient(getApplicationContext());
 
-        title = findViewById(R.id.respondActivityTitle);
+        /*title = findViewById(R.id.respondActivityTitle);
         //title.setTextSize(16);
-        title.setText("Select the place where this item is in stock");
+        title.setText("Select the place where this item is in stock");*/
 
         itemNameText = findViewById(R.id.respondItemName);
         sendBtn = findViewById(R.id.sendResponseBtn);
@@ -137,7 +146,8 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
                         if(!result){ //if permission is rejected
                             // toast or something
                             // make submit button say please enable location
-                            Toast.makeText(getApplicationContext(), "Please enable location services, then refresh the map", Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(getApplicationContext(), "Please enable location services, then refresh the map", Toast.LENGTH_SHORT).show();
+                            Snackbar.make(view, "Please enable location services, then refresh the map", Snackbar.LENGTH_SHORT).show();
                             Log.i("CUSTOM", "onClick: denied clicked");
                         }
                     }
@@ -152,36 +162,38 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
             }
         });
 
+        toggleSwitch = findViewById(R.id.respondSwitch);
+
         queue = Volley.newRequestQueue(getApplicationContext());
         Bundle extras = getIntent().getExtras();
         if (extras == null) {
-            Toast.makeText(this, "An error occurred.", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "An error occurred.", Toast.LENGTH_SHORT).show();
+            Snackbar.make(view, "An error occurred.", Snackbar.LENGTH_LONG).show();
             finish();
         } else {
             requestID = extras.getInt("requestID");
             responderID = extras.getInt("responderID");
 
             getCurrentLocation();
-            //Toast.makeText(this, "requestID " + requestID, Toast.LENGTH_SHORT).show();
-            //sendPOST();
         }
 
         getItemDetails();
     }
 
     private void refreshMap() {
-        Toast.makeText(this, "Getting location...", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "Getting location...", Toast.LENGTH_SHORT).show();
         getCurrentLocation();
     }
 
     private void getCurrentLocation(){
+        Snackbar.make(view, "Fetching location...", Snackbar.LENGTH_SHORT).show();
         if(permissionGranted()){
             @SuppressLint("MissingPermission") Task<Location> task = client.getLastLocation();
             task.addOnSuccessListener(new OnSuccessListener<Location>() {
                 @Override
                 public void onSuccess(Location location) {
                     if(location != null){
-                        map.clear();
+                        map.clear(); // clear all markers
                         mapView.setEnabled(true);
                         mapView.setClickable(true);
                         //Toast.makeText(RespondActivity.this, "getCurrentLocation Location isnt null", Toast.LENGTH_SHORT).show();
@@ -191,10 +203,16 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
                             @Override
                             public void onMapReady(@NonNull GoogleMap googleMap) {
                                 customOnMapReady(googleMap);
+
+                                // if user previously has selected a location, letak balik the marker on the map
+                                if(selectedLocation != null){
+                                    selectedLocation = map.addMarker(markerOptions);
+                                }
                             }
                         });
                     }else{
-                        Toast.makeText(RespondActivity.this, "Unable to retrieve location.", Toast.LENGTH_SHORT).show();
+                        Snackbar.make(view, "Unable to retrieve location.", Snackbar.LENGTH_LONG).show();
+                        //Toast.makeText(RespondActivity.this, "Unable to retrieve location.", Toast.LENGTH_SHORT).show();
                         mapView.setEnabled(false);
                         mapView.setClickable(false);
                     }
@@ -208,20 +226,58 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
     private void sendPOST(){
         if(permissionGranted()){
             if(currentLatLng != null) {
-                Toast.makeText(this, "dummy POST", Toast.LENGTH_SHORT).show();
-
+                //Toast.makeText(this, "dummy POST", Toast.LENGTH_SHORT).show();
                 StringRequest stringRequest = new StringRequest(Request.Method.POST, addResponseURL, new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-
+                        Toast.makeText(RespondActivity.this, "we POSTed!!!!", Toast.LENGTH_SHORT).show();
                     }
-                }, errorListener);
+                }, errorListener){
+                    @Nullable
+                    @Override
+                    protected Map<String, String> getParams() { //POST values
+                        Map<String, String> params = new HashMap<>();
+                        params.put("requestID", String.valueOf(requestID));
+
+                        if(toggleSwitch.isChecked()){ // is checked means use selected location
+                            params.put("storeLat", String.valueOf(markerOptions.getPosition().latitude));
+                            params.put("storeLng", String.valueOf(markerOptions.getPosition().longitude));
+
+                        }else{ // not checked means use current location
+                            params.put("storeLat", String.valueOf(currentLatLng.latitude));
+                            params.put("storeLng", String.valueOf(currentLatLng.longitude));
+                        }
+                        return params;
+                    }
+                };
+
+                boolean proceed = false;
+                String msg = "";
+                if(toggleSwitch.isChecked()) {
+                    if (markerOptions != null)
+                        proceed = true;
+                    else
+                        msg = "Please select a location on the map.";
+                }else {
+                    if (currentLatLng != null)
+                        proceed = true;
+                    else
+                        msg = "Unable to get location. Please turn on location services or try again later.";
+                }
+
+                if(proceed)
+                    queue.add(stringRequest);
+                else
+                    //Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+                    Snackbar.make(view, msg, Snackbar.LENGTH_LONG).show();
             }
             else{
-                Toast.makeText(this, "Unable to get location. Please try again later.", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(this, "", Toast.LENGTH_SHORT).show();
+                Snackbar.make(view, "Unable to get location. Please try again later.", Snackbar.LENGTH_LONG).show();
             }
         }else{ // if location permission is denied
-            Toast.makeText(this, "", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "", Toast.LENGTH_SHORT).show();
+            Snackbar.make(view, "Please allow location permissions.", Snackbar.LENGTH_LONG).show();
         }
     }
 
@@ -292,7 +348,7 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
 
     public void customOnMapReady(@NonNull GoogleMap googleMap) {
         map = googleMap;
-
+        map.getUiSettings().setMapToolbarEnabled(false);
         if(currentLatLng != null){
             //Toast.makeText(this, "Marker added", Toast.LENGTH_SHORT).show();
             //Toast.makeText(this, "lat/lng : " + currentLatLng.latitude + " " + currentLatLng.longitude, Toast.LENGTH_SHORT).show();
@@ -302,6 +358,43 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
                     .icon(bitmapDescriptorFromVector(getApplicationContext(), R.drawable.ic_baseline_person_pin_circle_24))
             );
             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 17));
+
+            googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+                @Override
+                public void onMapClick(@NonNull LatLng latLng) {
+                    // Only add a new marker if user has not previously set a marker
+                    if(selectedLocation == null){
+                        markerOptions = new MarkerOptions()
+                                .position(latLng)
+                                .title("Selected Location")
+                                .icon(bitmapDescriptorFromVector(getApplicationContext(), R.drawable.ic_baseline_location_on_24))
+                                .draggable(true);
+                        selectedLocation = map.addMarker(markerOptions);
+                    }else{ // If there is already a marker, change the position
+                        selectedLocation.setPosition(latLng);
+                        markerOptions.position(latLng);
+                    }
+                    //Toast.makeText(RespondActivity.this, "you clicked on lat lng " + latLng.latitude + " " + latLng.longitude, Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            // Make it so that dragging marker also saves it in the app, so that when refreshing it still stays
+            googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+                @Override
+                public void onMarkerDrag(@NonNull Marker marker) {
+
+                }
+
+                @Override
+                public void onMarkerDragEnd(@NonNull Marker marker) {
+                    markerOptions.position(marker.getPosition());
+                }
+
+                @Override
+                public void onMarkerDragStart(@NonNull Marker marker) {
+
+                }
+            });
         }else{
             //Toast.makeText(this, "currentLatLng is null", Toast.LENGTH_SHORT).show();
         }
