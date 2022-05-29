@@ -15,10 +15,10 @@
         android:background="@color/custom_purple_900"
         android:minHeight="?attr/actionBarSize"
         android:theme="?attr/actionBarTheme"
-        app:titleTextColor="@color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:titleTextColor="@color/white" />
 
     <!--TextView
         android:id="@+id/respondActivityTitle"
@@ -41,7 +41,7 @@
 
     <TextView
         android:id="@+id/respondItemName"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
         android:gravity="center"
@@ -50,60 +50,84 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/respondNameTitle" />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/respondRefreshBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="5dp"
+        android:layout_marginBottom="8dp"
+        android:backgroundTint="@color/custom_purple_300"
+        android:clickable="true"
+        android:contentDescription="Center to current location"
+        app:borderWidth="0dp"
+        app:layout_constraintBottom_toBottomOf="@+id/respondMap"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/ic_baseline_my_location_24" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/goToMarkerBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="5dp"
+        android:layout_marginBottom="8dp"
+        android:backgroundTint="@color/custom_purple_300"
+        android:clickable="true"
+        android:contentDescription="Center to selected location"
+        android:visibility="gone"
+        app:borderWidth="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/respondRefreshBtn"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/ic_baseline_location_on_24" />
+
     <com.google.android.gms.maps.MapView
         android:id="@+id/respondMap"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="0dp"
-        android:layout_marginTop="57dp"
-        android:layout_marginEnd="1dp"
-        android:layout_marginBottom="59dp"
-        app:layout_constraintBottom_toBottomOf="@+id/textView6"
+        android:layout_marginTop="77dp"
+        android:layout_marginBottom="78dp"
+        app:layout_constraintBottom_toTopOf="@+id/respondStoreNameLabel"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/respondNameTitle"
+        app:layout_constraintTop_toBottomOf="@+id/respondToolbar"
         tools:context=".ui.respond.RespondActivity" />
 
     <Button
         android:id="@+id/sendResponseBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="76dp"
+        android:layout_marginTop="13dp"
         android:backgroundTint="@color/custom_purple_500"
         android:text="Send"
-        app:layout_constraintBaseline_toBaselineOf="@+id/respondBackBtn"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintEnd_toStartOf="@+id/respondSwitch"
+        app:layout_constraintTop_toBottomOf="@+id/respondStoreNameText" />
 
     <Button
         android:id="@+id/respondBackBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="120dp"
+        android:layout_marginTop="13dp"
         android:backgroundTint="@android:color/darker_gray"
         android:text="Go Back"
         android:textColor="@color/black"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.503"
-        app:layout_constraintStart_toEndOf="@+id/sendResponseBtn" />
+        app:layout_constraintStart_toEndOf="@+id/respondSwitch"
+        app:layout_constraintTop_toBottomOf="@+id/respondStoreNameText" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/respondRefreshBtn"
+    <Switch
+        android:id="@+id/respondSwitch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="6dp"
-        android:layout_marginBottom="7dp"
-        android:backgroundTint="@color/custom_purple_300"
-        android:clickable="true"
-        app:layout_constraintBottom_toBottomOf="@+id/respondMap"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@drawable/ic_baseline_my_location_24" />
+        android:showText="false"
+        android:textColor="#4d4d4d"
+        app:layout_constraintEnd_toStartOf="@+id/toggleTextRight"
+        app:layout_constraintStart_toEndOf="@+id/toggleTextLeft"
+        app:layout_constraintTop_toBottomOf="@+id/respondLocationLabel"
+        tools:ignore="UseSwitchCompatOrMaterialXml" />
 
     <TextView
-        android:id="@+id/textView6"
-        android:layout_width="match_parent"
+        android:id="@+id/respondLocationLabel"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="220dp"
+        android:layout_marginBottom="248dp"
         android:gravity="center"
         android:text="Location"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -114,21 +138,13 @@
         android:id="@+id/toggleTextLeft"
         android:layout_width="wrap_content"
         android:layout_height="26dp"
-        android:layout_marginStart="69dp"
+        android:layout_marginStart="7dp"
         android:gravity="center_vertical"
         android:text="Current Location"
         app:layout_constraintBaseline_toBaselineOf="@+id/respondSwitch"
-        app:layout_constraintStart_toStartOf="@+id/textView6" />
-
-    <Switch
-        android:id="@+id/respondSwitch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:showText="false"
-        android:textColor="#4d4d4d"
-        app:layout_constraintStart_toEndOf="@+id/toggleTextLeft"
-        app:layout_constraintTop_toBottomOf="@+id/textView6"
-        tools:ignore="UseSwitchCompatOrMaterialXml" />
+        app:layout_constraintEnd_toStartOf="@+id/respondSwitch"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/toggleTextRight"
@@ -137,7 +153,31 @@
         android:gravity="center_vertical"
         android:text="Selected Location"
         app:layout_constraintBaseline_toBaselineOf="@+id/respondSwitch"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/respondSwitch" />
 
+    <TextView
+        android:id="@+id/respondStoreNameLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:gravity="center"
+        android:text="Store Name"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/respondSwitch" />
+
+    <EditText
+        android:id="@+id/respondStoreNameText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="40dp"
+        android:ems="10"
+        android:hint="Enter store name"
+        android:inputType="textPersonName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/respondStoreNameLabel" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

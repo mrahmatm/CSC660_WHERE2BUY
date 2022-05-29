@@ -18,4 +18,5 @@
     <color name="custom_orange_700">#f09800</color>
     <color name="custom_orange_900">#f26600</color>
     <color name="custom_text_color">#4d4d4d</color>
+    <color name="custom_error_red">#d03a40</color>
 </resources>
