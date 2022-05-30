@@ -59,9 +59,9 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
-public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCallback */{
+public class RespondActivity extends AppCompatActivity{
     // xml vars
-    private TextView title, itemNameText;
+    private TextView itemNameText;
     private Button sendBtn, cancelBtn;
     private MapView mapView;
     private FloatingActionButton refreshBtn, toMarkerBtn;
@@ -83,11 +83,11 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
     private RequestQueue queue;
 
     // normal vars
-    private String requestDateString, itemName, statusCode, statusMessage;
+    private String itemName, statusCode, statusMessage;
     private int requestID, responderID;
     private View view;
 
-    ActionBar actionBar;
+    private ActionBar actionBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
@@ -109,7 +109,6 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setTitle("Report Available");
 
-
         // Setup map
         mapView = findViewById(R.id.respondMap);
         mapView.onCreate(savedInstanceState);
@@ -122,10 +121,6 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
         selectedLocation = null;
 
         client = LocationServices.getFusedLocationProviderClient(getApplicationContext());
-
-        /*title = findViewById(R.id.respondActivityTitle);
-        //title.setTextSize(16);
-        title.setText("Select the place where this item is in stock");*/
 
         itemNameText = findViewById(R.id.respondItemName);
 
@@ -158,22 +153,21 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
 
         // Get permission prompt with callback found on https://stackoverflow.com/a/66552678
         mPermissionResult = registerForActivityResult(
-                new ActivityResultContracts.RequestPermission(),
-                new ActivityResultCallback<Boolean>() {
-                    @Override
-                    public void onActivityResult(Boolean result) {
-                        if(!result){ //if permission is rejected
-                            // toast or something
-                            // make submit button say please enable location
-                            //Toast.makeText(getApplicationContext(), "Please enable location services, then refresh the map", Toast.LENGTH_SHORT).show();
-                            Snackbar.make(view, "Please enable location services, then refresh the map", Snackbar.LENGTH_SHORT).show();
-                            Log.i("CUSTOM", "onClick: denied clicked");
-                        }
+            new ActivityResultContracts.RequestPermission(),
+            new ActivityResultCallback<Boolean>() {
+                @Override
+                public void onActivityResult(Boolean result) {
+                    if(!result){ //if permission is rejected
+                        // toast or something
+                        // make submit button say please enable location
+                        //Toast.makeText(getApplicationContext(), "Please enable location services, then refresh the map", Toast.LENGTH_SHORT).show();
+                        showSnackbar(0, "Please enable location services, then refresh the map");
+                        Log.i("CUSTOM", "onClick: denied clicked");
                     }
                 }
+            }
         );
         cancelBtn = findViewById(R.id.respondBackBtn);
-
         cancelBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -182,6 +176,16 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
         });
 
         toggleSwitch = findViewById(R.id.respondSwitch);
+        toggleSwitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(toggleSwitch.isChecked()){
+                    if(selectedLocation == null){
+                        showSnackbar(-1,"Please select a location on the map.");
+                    }
+                }
+            }
+        });
 
         // Initialize stuff for POST
         storeName = findViewById(R.id.respondStoreNameText);
@@ -189,7 +193,7 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
         Bundle extras = getIntent().getExtras();
         if (extras == null) {
             //Toast.makeText(this, "An error occurred.", Toast.LENGTH_SHORT).show();
-            Snackbar.make(view, "An error occurred.", Snackbar.LENGTH_LONG).show();
+            showSnackbar(-2,"An error occurred.");
             finish();
         } else {
             requestID = extras.getInt("requestID");
@@ -197,10 +201,13 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
             refreshMap();
             getItemDetails();
         }
+
     }
 
+    /*      Map stuff       */
+
     private void refreshMap(){
-        Snackbar.make(view, "Fetching location...", Snackbar.LENGTH_SHORT).show();
+        showSnackbar(0, "Fetching location...");
         if(permissionGranted()){
             @SuppressLint("MissingPermission") Task<Location> task = client.getLastLocation();
             task.addOnSuccessListener(new OnSuccessListener<Location>() {
@@ -220,7 +227,7 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
                             }
                         });
                     }else{
-                        Snackbar.make(view, "Unable to retrieve location.", Snackbar.LENGTH_LONG).setBackgroundTint(getResources().getColor(R.color.custom_error_red)).show();
+                        showSnackbar(-2,"Unable to retrieve location.");
                         //Toast.makeText(RespondActivity.this, "Unable to retrieve location.", Toast.LENGTH_SHORT).show();
                         mapView.setEnabled(false);
                         mapView.setClickable(false);
@@ -232,53 +239,194 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
         }
     }
 
-    private void sendPOST(){
+    public void customOnMapReady(@NonNull GoogleMap googleMap) {
+        map = googleMap;
+        map.getUiSettings().setMapToolbarEnabled(false);
+        if(currentLatLng != null){
+            //Toast.makeText(this, "Marker added", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "lat/lng : " + currentLatLng.latitude + " " + currentLatLng.longitude, Toast.LENGTH_SHORT).show();
+            map.addMarker(new MarkerOptions()
+                    .position(currentLatLng)
+                    .title("Current Location")
+                    .snippet("You are here.")
+                    .icon(bitmapDescriptorFromVector(getApplicationContext(), R.drawable.ic_baseline_person_pin_circle_24))
+            );
+            // if user previously has selected a location, place the marker back on the map
+            if(selectedLocation != null){
+                selectedLocation = map.addMarker(markerOptions);
+            }
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 17));
+            map.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+                @Override
+                public void onMapClick(@NonNull LatLng latLng) {
+                    // Only add a new marker if user has not previously set a marker
+                    if(selectedLocation == null){
+                        markerOptions = new MarkerOptions()
+                                .position(latLng)
+                                .title("Selected Location")
+                                .icon(bitmapDescriptorFromVector(getApplicationContext(), R.drawable.ic_baseline_location_on_24))
+                                .draggable(true);
+                        selectedLocation = map.addMarker(markerOptions);
+                        toMarkerBtn.setVisibility(View.VISIBLE); // when marker is added, set to visible
+                    }else{ // If there is already a marker, change the position
+                        selectedLocation.setPosition(latLng);
+                        markerOptions.position(latLng);
+                    }
+                    //Toast.makeText(RespondActivity.this, "you clicked on lat lng " + latLng.latitude + " " + latLng.longitude, Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            // Make it so that dragging marker also saves it in the app, so that when refreshing it still stays
+            map.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+                @Override
+                public void onMarkerDrag(@NonNull Marker marker) {
+
+                }
+
+                @Override
+                public void onMarkerDragEnd(@NonNull Marker marker) {
+                    markerOptions.position(marker.getPosition()); // Save new position after user drags the marker
+                }
+
+                @Override
+                public void onMarkerDragStart(@NonNull Marker marker) {
+
+                }
+            });
+        }else{
+            //Toast.makeText(this, "currentLatLng is null", Toast.LENGTH_SHORT).show();
+        }
+    }
+    private BitmapDescriptor bitmapDescriptorFromVector(Context context, int vectoriID){
+        Drawable vectorDrawable  = ContextCompat.getDrawable(context, vectoriID);
+        vectorDrawable.setBounds(0, 0, vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight());
+        Bitmap bitmap=Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+
+        vectorDrawable.draw(canvas);
+        return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+
+    @Override
+    protected void onResume() { // Override to also update mapView on resume
+        mapView.onResume(); // without this here, mapView will only update when it is tapped instead of constantly updating
+        super.onResume();
+    }
+
+
+    /*      Shortcut method because I'm too lazy to type in full lol        */
+    private void showSnackbar(int mode, String message){
+        switch(mode){
+            case 1:{ // success snackbar
+                Snackbar.make(view, message, Snackbar.LENGTH_LONG).setBackgroundTint(getResources().getColor(com.google.android.libraries.places.R.color.quantum_googgreen)).show();
+                break;
+            } case 0:{ // info/neutral snackbar
+                Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show();
+                break;
+            } case -1:{ // warn snackbar
+                Snackbar.make(view, message, Snackbar.LENGTH_LONG).setBackgroundTint(getResources().getColor(R.color.custom_orange_700)).show();
+                break;
+            } case -2:{ // error snackbar
+                Snackbar.make(view, message, Snackbar.LENGTH_LONG).setBackgroundTint(getResources().getColor(R.color.custom_error_red)).show();
+                break;
+            }
+        }
+    }
+
+    /*      Backend communication methods       */
+
+    private void getItemDetails() { // Get details of selected request
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, getItemDetailsURL, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                try {
+                    JSONObject rows = new JSONObject(response);
+                    JSONObject statusJson = rows.getJSONObject("status");
+                    JSONArray resultJson = rows.getJSONArray("result");
+
+                    statusCode = statusJson.getString("statusCode");
+                    statusMessage = statusJson.getString("statusMessage");
+                    switch (statusCode) {
+                        case "600": { // if query is successful and there are results
+                            // retrieve data from json
+                            requestID = resultJson.getJSONObject(0).getInt("requestID");
+                            itemName = resultJson.getJSONObject(0).getString("itemName");
+                            //requestDateString = resultJson.getJSONObject(0).getString("requestDate");
+
+                            //requestObject = new RequestsNearby(requestID, itemName, requestDateString);
+
+                            itemNameText.setText(itemName);
+                            Log.i("CUSTOM", "code 600");
+                            break;
+                        }
+                        default: {
+                            Log.e("CUSTOM", "Get details POSTed. Failed to get item.");
+                            break;
+                        }
+                    }
+                    // activityRespondText.setText(requestObject.toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    Log.e("CUSTOM", "JSONException: " + e.getMessage());
+                    //activityRespondText.setText(response + "\n\nJSONError: " + e.getMessage());
+                }
+            }}, errorListener) { //POST parameters
+            @Nullable
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<>();
+                params.put("requestID", String.valueOf(requestID));
+                return params;
+            }
+        };
+        if (stringRequest != null) {
+            queue.add(stringRequest);
+        } else {
+            Log.e("ERRORS", "stringRequest is null");
+        }
+    }
+
+    private void sendPOST(){ // Send response to server
         if(permissionGranted()){
             if(currentLatLng != null) {
                 //Toast.makeText(this, "dummy POST", Toast.LENGTH_SHORT).show();
                 StringRequest stringRequest = new StringRequest(Request.Method.POST, addResponseURL, new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        //Toast.makeText(RespondActivity.this, "we POSTed!!!!", Toast.LENGTH_SHORT).show();
-
                         try {
                             JSONObject rows = new JSONObject(response);
                             JSONObject statusJson = rows.getJSONObject("status");
 
-                            /*
-                            // Debug stuff
-                            JSONObject resultJson = rows.getJSONObject("query");
-                           */
                             statusCode = statusJson.getString("statusCode");
-                            statusMessage = statusJson.getString("statusMessage");
+                            //statusMessage = statusJson.getString("statusMessage");
                             switch (statusCode) {
                                 case "600": { // if query is successful
-                                    // retrieve data from json
-                                    //itemName = resultJson.getJSONObject(0).getString("itemName");
-                                    //requestDateString = resultJson.getJSONObject(0).getString("requestDate");
-
-                                    /*
-                                    // Debug stuff
-                                    String query = resultJson.getString("queryFull");
-                                    Log.i("CUSTOM", "code 600");
-                                    Log.i("CUSTOM", query);
-                                    */
-
-                                    Snackbar.make(view, "Your response has successfully been sent.", Snackbar.LENGTH_SHORT).setBackgroundTint(getResources().getColor(com.google.android.libraries.places.R.color.quantum_googgreen)).show();
+                                    showSnackbar(1,"Your response has successfully been sent.");
+                                    finish();
                                     break;
                                 }
                                 default: {
-                                    Log.e("CUSTOM", "something happened");
+                                    JSONObject resultJson = rows.getJSONObject("query");
+                                    String query = resultJson.getString("queryFull");
+                                    if(response.contains("Duplicate entry")){
+                                        statusMessage = "You have already responded to this request.";
+                                    }else{
+                                        statusMessage = "An unexpected error occurred.";
+                                    }
+                                    showSnackbar(-2,statusMessage);
+                                    //Log.e("CUSTOM", query);
+                                    //Log.e("CUSTOM", response);
                                     break;
                                 }
                             }
                             // activityRespondText.setText(requestObject.toString());
                         } catch (JSONException e) {
                             e.printStackTrace();
-                            Log.e("CUSTOM", "JSONException: " + e.getMessage());
+                            showSnackbar(-2, "An unexpected error occurred.");
+                            //Log.e("CUSTOM", "JSONException: " + e.getMessage());
+                            //Log.e("CUSTOM", "PHP response: " + response);
                             //activityRespondText.setText(response + "\n\nJSONError: " + e.getMessage());
                         }
-
                     }
                 }, errorListener){
                     @Nullable
@@ -286,7 +434,7 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
                     protected Map<String, String> getParams() { //POST values
                         Map<String, String> params = new HashMap<>();
                         params.put("requestID", String.valueOf(requestID));
-                        params.put("responderID", String.valueOf(MainActivity.getUserId()));
+                        params.put("responderID", MainActivity.getUserId());
                         params.put("storeName", storeName.getText().toString().trim());
 
                         //Stored in db currently: request id, responder user id, store name, lat, lng, item count
@@ -307,11 +455,11 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
             }
             else{
                 //Toast.makeText(this, "", Toast.LENGTH_SHORT).show();
-                Snackbar.make(view, "Unable to get location. Please try again later.", Snackbar.LENGTH_LONG).setBackgroundTint(getResources().getColor(R.color.custom_error_red)).show();
+                showSnackbar(-2,"Unable to get location. Please try again later.");
             }
         }else{ // if location permission is denied
             //Toast.makeText(this, "", Toast.LENGTH_SHORT).show();
-            Snackbar.make(view, "Please allow location permissions.", Snackbar.LENGTH_LONG).setBackgroundTint(getResources().getColor(R.color.custom_error_red)).show();
+            showSnackbar(-2,"Please allow location permissions.");
         }
     }
 
@@ -341,149 +489,26 @@ public class RespondActivity extends AppCompatActivity/* implements OnMapReadyCa
         }
         proceed = storeNameValid && markerOptionValid; // proceed will only be true if both inputs are valid
 
-        if(!proceed) // if !proceed, display message
-            Snackbar.make(view, msg, Snackbar.LENGTH_LONG).setBackgroundTint(getResources().getColor(R.color.custom_orange_700)).show();
+        if(!proceed) // if inputs are invalid, display message
+            showSnackbar(-1, msg);
 
         return proceed;
-    }
-
-    private void getItemDetails() {
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, getItemDetailsURL, new Response.Listener<String>() {
-        @Override
-        public void onResponse(String response) {
-            try {
-                JSONObject rows = new JSONObject(response);
-                JSONObject statusJson = rows.getJSONObject("status");
-                JSONArray resultJson = rows.getJSONArray("result");
-
-                statusCode = statusJson.getString("statusCode");
-                statusMessage = statusJson.getString("statusMessage");
-                switch (statusCode) {
-                    case "600": { // if query is successful and there are results
-                        // retrieve data from json
-                        requestID = resultJson.getJSONObject(0).getInt("requestID");
-                        itemName = resultJson.getJSONObject(0).getString("itemName");
-                        requestDateString = resultJson.getJSONObject(0).getString("requestDate");
-
-                        //requestObject = new RequestsNearby(requestID, itemName, requestDateString);
-
-                        itemNameText.setText(itemName);
-                        Log.i("CUSTOM", "code 600");
-                        break;
-                    }
-                    default: {
-                        Log.i("CUSTOM", "code something else");
-                        break;
-                    }
-                }
-                // activityRespondText.setText(requestObject.toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
-                Log.e("CUSTOM", "JSONException: " + e.getMessage());
-                //activityRespondText.setText(response + "\n\nJSONError: " + e.getMessage());
-            }
-        }}, errorListener) { //POST parameters
-            @Nullable
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<>();
-                params.put("requestID", String.valueOf(requestID));
-                return params;
-            }
-        };
-        if (stringRequest != null) {
-            queue.add(stringRequest);
-        } else {
-            Log.e("ERRORS", "stringRequest is null");
-        }
     }
 
     public Response.ErrorListener errorListener = new Response.ErrorListener() {
         @Override
         public void onErrorResponse(VolleyError error) {
             Log.e("ERRORS", "onErrorResponse: " + error.getLocalizedMessage());
-            Snackbar.make(view, "An unexpected error occurred.", Snackbar.LENGTH_LONG).setBackgroundTint(getResources().getColor(R.color.custom_error_red)).show();
+            showSnackbar(-2,"An unexpected error occurred.");
         }
     };
 
+    /*      Permission shortcut methods      */
     private boolean permissionGranted() {
         return ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
+
     private void getPermission() {
         mPermissionResult.launch(Manifest.permission.ACCESS_FINE_LOCATION);
-    }
-
-    public void customOnMapReady(@NonNull GoogleMap googleMap) {
-        map = googleMap;
-        map.getUiSettings().setMapToolbarEnabled(false);
-        if(currentLatLng != null){
-            //Toast.makeText(this, "Marker added", Toast.LENGTH_SHORT).show();
-            //Toast.makeText(this, "lat/lng : " + currentLatLng.latitude + " " + currentLatLng.longitude, Toast.LENGTH_SHORT).show();
-            map.addMarker(new MarkerOptions()
-                    .position(currentLatLng)
-                    .title("You are here")
-                    .icon(bitmapDescriptorFromVector(getApplicationContext(), R.drawable.ic_baseline_person_pin_circle_24))
-            );
-            // if user previously has selected a location, letak balik the marker on the map
-            if(selectedLocation != null){
-                selectedLocation = map.addMarker(markerOptions);
-            }
-            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 17));
-
-            googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-                @Override
-                public void onMapClick(@NonNull LatLng latLng) {
-                    // Only add a new marker if user has not previously set a marker
-                    if(selectedLocation == null){
-                        markerOptions = new MarkerOptions()
-                                .position(latLng)
-                                .title("Selected Location")
-                                .icon(bitmapDescriptorFromVector(getApplicationContext(), R.drawable.ic_baseline_location_on_24))
-                                .draggable(true);
-                        selectedLocation = map.addMarker(markerOptions);
-                        toMarkerBtn.setVisibility(View.VISIBLE); // when marker is added, set to visible
-                    }else{ // If there is already a marker, change the position
-                        selectedLocation.setPosition(latLng);
-                        markerOptions.position(latLng);
-                    }
-                    //Toast.makeText(RespondActivity.this, "you clicked on lat lng " + latLng.latitude + " " + latLng.longitude, Toast.LENGTH_SHORT).show();
-                }
-            });
-
-            // Make it so that dragging marker also saves it in the app, so that when refreshing it still stays
-            googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
-                @Override
-                public void onMarkerDrag(@NonNull Marker marker) {
-
-                }
-
-                @Override
-                public void onMarkerDragEnd(@NonNull Marker marker) {
-                    markerOptions.position(marker.getPosition());
-                }
-
-                @Override
-                public void onMarkerDragStart(@NonNull Marker marker) {
-
-                }
-            });
-        }else{
-            //Toast.makeText(this, "currentLatLng is null", Toast.LENGTH_SHORT).show();
-        }
-    }
-    private BitmapDescriptor bitmapDescriptorFromVector(Context context, int vectoriID){
-        Drawable vectorDrawable  = ContextCompat.getDrawable(context, vectoriID);
-        vectorDrawable.setBounds(0, 0, vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight());
-        Bitmap bitmap=Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-
-        vectorDrawable.draw(canvas);
-        return BitmapDescriptorFactory.fromBitmap(bitmap);
-    }
-
-    @Override
-    protected void onResume() { // Override to also update mapView on resume
-        mapView.onResume(); // without this here, mapView will only update when it is tapped instead of constantly updating
-        super.onResume();
     }
 }
