@@ -50,4 +50,6 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 
     implementation 'com.google.android.gms:play-services-auth:20.2.0'
+
+    implementation 'com.karumi:dexter:6.2.3'
 }
