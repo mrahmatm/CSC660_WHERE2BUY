@@ -101,6 +101,8 @@ public class RequestFragment extends Fragment implements OnMapReadyCallback {
     private Circle circle;
     private CircleOptions circleOption;
 
+    String URL = "";
+
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         RequestViewModel requestViewModel = new ViewModelProvider(this).get(RequestViewModel.class);
 
