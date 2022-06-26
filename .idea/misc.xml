@@ -3,8 +3,18 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/-Codes/CSC660_WHERE2BUY/app/src/main/res/drawable/ic_baseline_my_location_24_blue.xml" value="0.3305" />
         <entry key="..\:/-Codes/CSC660_WHERE2BUY/app/src/main/res/font/font.xml" value="0.28489583333333335" />
         <entry key="..\:/-Codes/CSC660_WHERE2BUY/app/src/main/res/layout/activity_login.xml" value="0.2546875" />
+        <entry key="..\:/-Codes/CSC660_WHERE2BUY/app/src/main/res/layout/activity_main.xml" value="0.36666666666666664" />
+        <entry key="..\:/-Codes/CSC660_WHERE2BUY/app/src/main/res/layout/activity_respond.xml" value="0.36666666666666664" />
+        <entry key="..\:/-Codes/CSC660_WHERE2BUY/app/src/main/res/layout/activity_store_maps.xml" value="0.36666666666666664" />
+        <entry key="..\:/-Codes/CSC660_WHERE2BUY/app/src/main/res/layout/fragment_map.xml" value="0.36666666666666664" />
+        <entry key="..\:/-Codes/CSC660_WHERE2BUY/app/src/main/res/layout/fragment_maps.xml" value="0.2595108695652174" />
+        <entry key="..\:/-Codes/CSC660_WHERE2BUY/app/src/main/res/layout/fragment_request.xml" value="0.5" />
+        <entry key="..\:/-Codes/CSC660_WHERE2BUY/app/src/main/res/layout/fragment_respond.xml" value="0.36666666666666664" />
+        <entry key="..\:/-Codes/CSC660_WHERE2BUY/app/src/main/res/layout/layout_listitems.xml" value="0.36666666666666664" />
+        <entry key="..\:/-Codes/CSC660_WHERE2BUY/app/src/main/res/menu/bottom_nav_menu.xml" value="0.36666666666666664" />
         <entry key="..\:/Users/mrahm/AndroidStudioProjects/CSC660_GRPPROJECT_WHERE2BUY/app/src/main/res/layout/activity_main.xml" value="0.358695652173913" />
         <entry key="..\:/Users/mrahm/AndroidStudioProjects/CSC660_WHERE2BUY/CSC660_WHERE2BUY/app/src/main/res/drawable/bg_round.xml" value="0.295" />
         <entry key="..\:/Users/mrahm/AndroidStudioProjects/CSC660_WHERE2BUY/CSC660_WHERE2BUY/app/src/main/res/layout/activity_store_maps.xml" value="0.358695652173913" />
