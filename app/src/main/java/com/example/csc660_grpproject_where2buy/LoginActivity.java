@@ -10,6 +10,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -19,14 +23,20 @@ import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class LoginActivity extends AppCompatActivity {
+    private final String loginURL = "http://csc660.allprojectcs270.com/login.php";
     private static final String TAG = null;
     GoogleSignInOptions gso;
     GoogleSignInClient mGoogleSignInClient;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //int RC_SIGN_IN = 1;
-
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
@@ -69,14 +79,48 @@ public class LoginActivity extends AppCompatActivity {
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
             try {
                 task.getResult(ApiException.class);
-                goToMain(task.getResult());
+                GoogleSignInAccount gsia = task.getResult();
+
+                StringRequest stringRequest = new StringRequest(Request.Method.POST, loginURL, new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+
+                            int statusCode = jsonObject.getInt("statusCode");
+                            String statusMsg = jsonObject.getString("statusDesc");
+
+                            if(statusCode == 200 || statusCode == 202)
+                                goToMain(gsia);
+                            else
+                                Toast.makeText(LoginActivity.this, "ERROR: " + statusMsg, Toast.LENGTH_SHORT).show();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e(TAG, "onErrorResponse: " + error.getMessage());
+                    }
+                })
+                { // POST values
+                    @Override
+                    protected Map<String, String> getParams() {
+                        Map<String, String> params = new HashMap<>();
+                        params.put("googleID", String.valueOf(gsia.getId()));
+                        params.put("displayName", String.valueOf(gsia.getDisplayName()));
+                        return params;
+                    }
+                };
+
             } catch (ApiException e) {
                 e.printStackTrace();
 
                 if(e.getStatusCode() != GoogleSignInStatusCodes.SIGN_IN_CANCELLED){
                     String statusMsg = GoogleSignInStatusCodes.getStatusCodeString(e.getStatusCode());
                     Toast.makeText(getApplicationContext(), "Something went wrong\nError Message: " + statusMsg, Toast.LENGTH_LONG).show();
-                    Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
+                    Log.e(TAG, "signInResult:failed code=" + e.getStatusCode());
                 }else{
                     Toast.makeText(getApplicationContext(), "Please sign in to proceed.", Toast.LENGTH_SHORT).show();
                 }
