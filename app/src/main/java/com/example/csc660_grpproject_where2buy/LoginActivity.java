@@ -11,9 +11,11 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.android.volley.Request;
+import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -31,6 +33,7 @@ import java.util.Map;
 
 public class LoginActivity extends AppCompatActivity {
     private final String loginURL = "http://csc660.allprojectcs270.com/login.php";
+    private RequestQueue queue;
     private static final String TAG = null;
     GoogleSignInOptions gso;
     GoogleSignInClient mGoogleSignInClient;
@@ -40,6 +43,8 @@ public class LoginActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        queue = Volley.newRequestQueue(getApplicationContext());
 
         SignInButton googleSignIn = findViewById(R.id.google_btn);
         // Configure sign-in to request the user's ID, email address, and basic
@@ -113,7 +118,7 @@ public class LoginActivity extends AppCompatActivity {
                         return params;
                     }
                 };
-
+                queue.add(stringRequest);
             } catch (ApiException e) {
                 e.printStackTrace();
 
