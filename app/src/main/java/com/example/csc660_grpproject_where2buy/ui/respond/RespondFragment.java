@@ -73,7 +73,7 @@ public class RespondFragment extends Fragment {
     ArrayList<String> msg;
     ListViewRespond adapter2;
 
-    final String URL = "http://www.csc660.ml/getRequestList.php";
+    final String URL = "http://csc660.allprojectcs270.com/getRequestList.php";
     RequestQueue queue;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -135,6 +135,7 @@ public class RespondFragment extends Fragment {
     }
 
     private void refresh(){ // Get location, or do appropriate actions if needed. Called once after fragment loads and every time refresh button is pressed
+        //Log.i("INFO", "refresh: ");
         msg.clear();
         msg.add(0, "Refreshing...");
         adapter.notifyDataSetChanged();
@@ -146,9 +147,9 @@ public class RespondFragment extends Fragment {
                 @Override
                 public void onSuccess(final Location location) {
                     if (location != null) {
+                        msg.set(0, "test");
                         currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
                         sendRequest();
-
                     } else {
                         msg.set(0, "Unable to retrieve location.\n\nTurn on location services or try again later.");
                         adapter.notifyDataSetChanged();
@@ -236,6 +237,9 @@ public class RespondFragment extends Fragment {
     public Response.ErrorListener errorListener = new Response.ErrorListener() {
         @Override
         public void onErrorResponse(VolleyError error) {
+            msg.clear();
+            msg.add(0, "Could not connect to the server. Please try again later.");
+            adapter.notifyDataSetChanged();
             Log.e("RESPONSE", "onErrorResponse: " + error.getMessage());
         }
     };

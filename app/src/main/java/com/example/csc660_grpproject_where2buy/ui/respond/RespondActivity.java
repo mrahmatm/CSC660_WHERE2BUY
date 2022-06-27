@@ -78,8 +78,8 @@ public class RespondActivity extends AppCompatActivity{
     private MarkerOptions markerOptions;
 
     // backend communication vars
-    private final String getItemDetailsURL = "http://www.csc660.ml/getRequest.php";
-    private final String addResponseURL = "http://www.csc660.ml/addRespond.php";
+    private final String getItemDetailsURL = "http://csc660.allprojectcs270.com/getRequest.php";
+    private final String addResponseURL = "http://csc660.allprojectcs270.com/addRespond.php";
     private RequestQueue queue;
 
     // normal vars
