@@ -411,6 +411,7 @@ public class RespondActivity extends AppCompatActivity{
                                     if(response.contains("Duplicate entry")){
                                         statusMessage = "You have already responded to this request.";
                                     }else{
+                                        Log.e("RESPOND ERROR", "onResponse: " + response);
                                         statusMessage = "An unexpected error occurred.";
                                     }
                                     showSnackbar(-2,statusMessage);
