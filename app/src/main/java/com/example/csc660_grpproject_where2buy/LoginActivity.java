@@ -100,7 +100,7 @@ public class LoginActivity extends AppCompatActivity {
                             else
                                 Toast.makeText(LoginActivity.this, "ERROR: " + statusMsg, Toast.LENGTH_SHORT).show();
                         } catch (JSONException e) {
-                            e.printStackTrace();
+                            Log.e(TAG, "onResponse: " + e.getMessage() + "\n" + response);
                         }
                     }
                 }, new Response.ErrorListener() {
