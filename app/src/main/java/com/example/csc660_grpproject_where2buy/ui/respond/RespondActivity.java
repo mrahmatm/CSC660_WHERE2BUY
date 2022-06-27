@@ -17,9 +17,11 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
+import android.text.InputFilter;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -34,6 +36,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.csc660_grpproject_where2buy.InputFilterMinMax;
 import com.example.csc660_grpproject_where2buy.MainActivity;
 import com.example.csc660_grpproject_where2buy.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -44,6 +47,7 @@ import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -67,15 +71,16 @@ public class RespondActivity extends AppCompatActivity{
     private FloatingActionButton refreshBtn, toMarkerBtn;
     private Toolbar toolbar;
     private Switch toggleSwitch;
-    private EditText storeName;
+    private EditText storeName, itemQty;
 
     // location vars
     private FusedLocationProviderClient client;
     private ActivityResultLauncher<String> mPermissionResult;
-    private LatLng currentLatLng;
+    private LatLng currentLatLng, selectedLocation;
     private GoogleMap map;
-    private Marker selectedLocation;
+    //private Marker selectedLocation;
     private MarkerOptions markerOptions;
+    private Marker location;
 
     // backend communication vars
     private final String getItemDetailsURL = "http://csc660.allprojectcs270.com/getRequest.php";
@@ -141,15 +146,6 @@ public class RespondActivity extends AppCompatActivity{
             }
         });
 
-        toMarkerBtn = findViewById(R.id.goToMarkerBtn);
-        toMarkerBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(selectedLocation != null){
-                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(selectedLocation.getPosition(), 17));
-                }
-            }
-        });
 
         // Get permission prompt with callback found on https://stackoverflow.com/a/66552678
         mPermissionResult = registerForActivityResult(
@@ -175,7 +171,7 @@ public class RespondActivity extends AppCompatActivity{
             }
         });
 
-        toggleSwitch = findViewById(R.id.respondSwitch);
+        /*toggleSwitch = findViewById(R.id.respondSwitch);
         toggleSwitch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -185,10 +181,12 @@ public class RespondActivity extends AppCompatActivity{
                     }
                 }
             }
-        });
+        });*/
 
         // Initialize stuff for POST
         storeName = findViewById(R.id.respondStoreNameText);
+        itemQty = findViewById(R.id.respondItemQtyText);
+        itemQty.setFilters(new InputFilter[]{new InputFilterMinMax("1", "999")});
         queue = Volley.newRequestQueue(getApplicationContext());
         Bundle extras = getIntent().getExtras();
         if (extras == null) {
@@ -245,17 +243,46 @@ public class RespondActivity extends AppCompatActivity{
         if(currentLatLng != null){
             //Toast.makeText(this, "Marker added", Toast.LENGTH_SHORT).show();
             //Toast.makeText(this, "lat/lng : " + currentLatLng.latitude + " " + currentLatLng.longitude, Toast.LENGTH_SHORT).show();
-            map.addMarker(new MarkerOptions()
+            MarkerOptions options = new MarkerOptions()
                     .position(currentLatLng)
-                    .title("Current Location")
-                    .snippet("You are here.")
-                    .icon(bitmapDescriptorFromVector(getApplicationContext(), R.drawable.ic_baseline_person_pin_circle_24))
-            );
+                    .title("Drag to change position")
+                    .icon(bitmapDescriptorFromVector(getApplicationContext(), R.drawable.ic_baseline_location_on_24));
+            location = map.addMarker(options);
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 17));
+            //map.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition(currentLatLng, 17, 0, 0)));
+
+            map.setOnCameraMoveStartedListener(new GoogleMap.OnCameraMoveStartedListener() {
+                @Override
+                public void onCameraMoveStarted(int i) {
+                    switch(i){
+                        case 1: case 2: case 3:
+                            sendBtn.setEnabled(false);
+                            sendBtn.setBackgroundColor(Color.GRAY);
+                            break;
+                    }
+                }
+            });
+
+            map.setOnCameraMoveListener(new GoogleMap.OnCameraMoveListener() {
+                @Override
+                public void onCameraMove() {
+                    location.setPosition(map.getCameraPosition().target);
+                }
+            });
+
+            map.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
+                @Override
+                public void onCameraIdle() {
+                    selectedLocation = map.getCameraPosition().target;
+                    sendBtn.setEnabled(true);
+                    sendBtn.setBackgroundColor(Color.parseColor("#5556ba"));
+                }
+            });
             // if user previously has selected a location, place the marker back on the map
-            if(selectedLocation != null){
+            /*if(selectedLocation != null){
                 selectedLocation = map.addMarker(markerOptions);
             }
-            map.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 17));
+
             map.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
                 @Override
                 public void onMapClick(@NonNull LatLng latLng) {
@@ -274,10 +301,11 @@ public class RespondActivity extends AppCompatActivity{
                     }
                     //Toast.makeText(RespondActivity.this, "you clicked on lat lng " + latLng.latitude + " " + latLng.longitude, Toast.LENGTH_SHORT).show();
                 }
-            });
+            });*/
+
 
             // Make it so that dragging marker also saves it in the app, so that when refreshing it still stays
-            map.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+            /*map.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
                 @Override
                 public void onMarkerDrag(@NonNull Marker marker) {
 
@@ -292,7 +320,7 @@ public class RespondActivity extends AppCompatActivity{
                 public void onMarkerDragStart(@NonNull Marker marker) {
 
                 }
-            });
+            });*/
         }else{
             //Toast.makeText(this, "currentLatLng is null", Toast.LENGTH_SHORT).show();
         }
@@ -386,7 +414,7 @@ public class RespondActivity extends AppCompatActivity{
         }
     }
 
-    private void sendPOST(){ // Send response to server
+    private void sendPOST(){ // Send request to server
         if(permissionGranted()){
             if(currentLatLng != null) {
                 //Toast.makeText(this, "dummy POST", Toast.LENGTH_SHORT).show();
@@ -401,7 +429,8 @@ public class RespondActivity extends AppCompatActivity{
                             //statusMessage = statusJson.getString("statusMessage");
                             switch (statusCode) {
                                 case "600": { // if query is successful
-                                    showSnackbar(1,"Your response has successfully been sent.");
+                                    //showSnackbar(1,"Your response has successfully been sent.");
+                                    Toast.makeText(RespondActivity.this, "Your response has successfully been recorded", Toast.LENGTH_SHORT).show();
                                     finish();
                                     break;
                                 }
@@ -439,14 +468,10 @@ public class RespondActivity extends AppCompatActivity{
                         params.put("storeName", storeName.getText().toString().trim());
 
                         //Stored in db currently: request id, responder user id, store name, lat, lng, item count
-                        if(toggleSwitch.isChecked()){ // is checked means use selected location
-                            params.put("storeLat", String.valueOf(markerOptions.getPosition().latitude));
-                            params.put("storeLng", String.valueOf(markerOptions.getPosition().longitude));
+                        params.put("storeLat", String.valueOf(selectedLocation.latitude));
+                        params.put("storeLng", String.valueOf(selectedLocation.longitude));
 
-                        }else{ // not checked means use current location
-                            params.put("storeLat", String.valueOf(currentLatLng.latitude));
-                            params.put("storeLng", String.valueOf(currentLatLng.longitude));
-                        }
+                        params.put("itemQty", itemQty.getText().toString().trim());
                         return params;
                     }
                 };
@@ -466,7 +491,7 @@ public class RespondActivity extends AppCompatActivity{
 
     private boolean inputsAreValid(){
         boolean storeNameValid = false;
-        boolean markerOptionValid = false;
+        boolean qtyValid = false;
         boolean proceed;
         String msg = "";
 
@@ -477,18 +502,12 @@ public class RespondActivity extends AppCompatActivity{
             msg = "Please enter the store name.";
 
         // Check if location is valid
-        if(toggleSwitch.isChecked()) {// if using custom location
-            if (markerOptions != null)  // if custom location marker exists, set as valid
-                markerOptionValid = true;
-            else                        // if custom location marker does not exist, set warning message
-                msg += "Please select a location on the map.";
-        }else {                       // if using current location
-            if (currentLatLng != null)  // if user location can be retrieved, set as valid
-                markerOptionValid = true;
-            else                        // if user location can't be retrieved, set warning message
-                msg += "Unable to get location. Please turn on location services or try again later.";
-        }
-        proceed = storeNameValid && markerOptionValid; // proceed will only be true if both inputs are valid
+        if (!itemQty.getText().toString().trim().equals(""))  // if custom location marker exists, set as valid
+            qtyValid = true;
+        else                        // if custom location marker does not exist, set warning message
+            msg += "\nPlease select a location on the map.";
+
+        proceed = storeNameValid && qtyValid; // proceed will only be true if both inputs are valid
 
         if(!proceed) // if inputs are invalid, display message
             showSnackbar(-1, msg);

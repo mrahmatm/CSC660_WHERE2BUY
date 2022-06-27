@@ -64,28 +64,14 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/ic_baseline_my_location_24" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/goToMarkerBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="5dp"
-        android:layout_marginBottom="8dp"
-        android:backgroundTint="@color/custom_purple_300"
-        android:clickable="true"
-        android:contentDescription="Center to selected location"
-        android:visibility="gone"
-        app:borderWidth="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/respondRefreshBtn"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@drawable/ic_baseline_location_on_24" />
 
     <com.google.android.gms.maps.MapView
         android:id="@+id/respondMap"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="77dp"
-        android:layout_marginBottom="78dp"
-        app:layout_constraintBottom_toTopOf="@+id/respondStoreNameLabel"
+        android:layout_marginBottom="77dp"
+        app:layout_constraintBottom_toBottomOf="@+id/respondStoreNameText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/respondToolbar"
@@ -95,77 +81,46 @@
         android:id="@+id/sendResponseBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="13dp"
+        android:layout_marginStart="54dp"
+        android:layout_marginTop="14dp"
         android:backgroundTint="@color/custom_purple_500"
         android:text="Send"
-        app:layout_constraintEnd_toStartOf="@+id/respondSwitch"
-        app:layout_constraintTop_toBottomOf="@+id/respondStoreNameText" />
+        app:layout_constraintStart_toStartOf="@+id/respondItemQtyText"
+        app:layout_constraintTop_toBottomOf="@+id/respondItemQtyText" />
 
     <Button
         android:id="@+id/respondBackBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="13dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="37dp"
         android:backgroundTint="@android:color/darker_gray"
         android:text="Go Back"
         android:textColor="@color/black"
-        app:layout_constraintStart_toEndOf="@+id/respondSwitch"
-        app:layout_constraintTop_toBottomOf="@+id/respondStoreNameText" />
-
-    <Switch
-        android:id="@+id/respondSwitch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:showText="false"
-        android:textColor="#4d4d4d"
-        app:layout_constraintEnd_toStartOf="@+id/toggleTextRight"
-        app:layout_constraintStart_toEndOf="@+id/toggleTextLeft"
-        app:layout_constraintTop_toBottomOf="@+id/respondLocationLabel"
-        tools:ignore="UseSwitchCompatOrMaterialXml" />
+        app:layout_constraintEnd_toEndOf="@+id/respondItemQtyText"
+        app:layout_constraintTop_toBottomOf="@+id/respondItemQtyText" />
 
     <TextView
         android:id="@+id/respondLocationLabel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="248dp"
+        android:layout_marginBottom="247dp"
         android:gravity="center"
-        android:text="Store Location"
+        android:text="Store Name"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/toggleTextLeft"
-        android:layout_width="wrap_content"
-        android:layout_height="26dp"
-        android:layout_marginStart="7dp"
-        android:gravity="center_vertical"
-        android:text="Current Location"
-        app:layout_constraintBaseline_toBaselineOf="@+id/respondSwitch"
-        app:layout_constraintEnd_toStartOf="@+id/respondSwitch"
-        app:layout_constraintHorizontal_chainStyle="packed"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <TextView
-        android:id="@+id/toggleTextRight"
-        android:layout_width="wrap_content"
-        android:layout_height="26dp"
-        android:gravity="center_vertical"
-        android:text="Selected Location"
-        app:layout_constraintBaseline_toBaselineOf="@+id/respondSwitch"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/respondSwitch" />
-
-    <TextView
         android:id="@+id/respondStoreNameLabel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="18dp"
+        android:layout_marginTop="1dp"
         android:gravity="center"
-        android:text="Store Name"
+        android:text="Quantity"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/respondSwitch" />
+        app:layout_constraintTop_toBottomOf="@+id/respondStoreNameText" />
 
     <EditText
         android:id="@+id/respondStoreNameText"
@@ -174,8 +129,21 @@
         android:layout_marginStart="40dp"
         android:layout_marginEnd="40dp"
         android:ems="10"
-        android:hint="Enter store name"
+        android:hint="e.g. Kedai Runcit XYZ"
         android:inputType="textPersonName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/respondLocationLabel" />
+
+    <EditText
+        android:id="@+id/respondItemQtyText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="40dp"
+        android:ems="10"
+        android:hint="e.g. 10"
+        android:inputType="numberDecimal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/respondStoreNameLabel" />
