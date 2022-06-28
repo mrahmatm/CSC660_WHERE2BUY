@@ -82,29 +82,28 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="54dp"
-        android:layout_marginTop="14dp"
+        android:layout_marginTop="34dp"
         android:backgroundTint="@color/custom_purple_500"
         android:text="Send"
-        app:layout_constraintStart_toStartOf="@+id/respondItemQtyText"
-        app:layout_constraintTop_toBottomOf="@+id/respondItemQtyText" />
+        app:layout_constraintStart_toStartOf="@+id/respondQtySpinner"
+        app:layout_constraintTop_toBottomOf="@+id/respondQtySpinner" />
 
     <Button
         android:id="@+id/respondBackBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
         android:layout_marginEnd="37dp"
         android:backgroundTint="@android:color/darker_gray"
         android:text="Go Back"
         android:textColor="@color/black"
-        app:layout_constraintEnd_toEndOf="@+id/respondItemQtyText"
-        app:layout_constraintTop_toBottomOf="@+id/respondItemQtyText" />
+        app:layout_constraintBaseline_toBaselineOf="@+id/sendResponseBtn"
+        app:layout_constraintEnd_toEndOf="@+id/respondQtySpinner" />
 
     <TextView
         android:id="@+id/respondLocationLabel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="247dp"
+        android:layout_marginBottom="246dp"
         android:gravity="center"
         android:text="Store Name"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -117,7 +116,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="1dp"
         android:gravity="center"
-        android:text="Quantity"
+        android:text="Estimated Quantity"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/respondStoreNameText" />
@@ -135,15 +134,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/respondLocationLabel" />
 
-    <EditText
-        android:id="@+id/respondItemQtyText"
+    <Spinner
+        android:id="@+id/respondQtySpinner"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="40dp"
         android:layout_marginEnd="40dp"
-        android:ems="10"
-        android:hint="e.g. 10"
-        android:inputType="numberDecimal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/respondStoreNameLabel" />

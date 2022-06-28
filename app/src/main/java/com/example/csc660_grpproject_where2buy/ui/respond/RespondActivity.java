@@ -21,11 +21,13 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
-import android.text.InputFilter;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,7 +38,6 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.example.csc660_grpproject_where2buy.InputFilterMinMax;
 import com.example.csc660_grpproject_where2buy.MainActivity;
 import com.example.csc660_grpproject_where2buy.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -47,7 +48,6 @@ import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -72,6 +72,8 @@ public class RespondActivity extends AppCompatActivity{
     private Toolbar toolbar;
     private Switch toggleSwitch;
     private EditText storeName, itemQty;
+    private Spinner qtySelect;
+    private String selectedQty;
 
     // location vars
     private FusedLocationProviderClient client;
@@ -185,8 +187,27 @@ public class RespondActivity extends AppCompatActivity{
 
         // Initialize stuff for POST
         storeName = findViewById(R.id.respondStoreNameText);
-        itemQty = findViewById(R.id.respondItemQtyText);
-        itemQty.setFilters(new InputFilter[]{new InputFilterMinMax("1", "999")});
+        //itemQty = findViewById(R.id.respondItemQtyText);
+        //itemQty.setFilters(new InputFilter[]{new InputFilterMinMax("1", "999")});
+
+        qtySelect = findViewById(R.id.respondQtySpinner);
+        String[] qtyOptions = {"Few", "Many"};
+        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, qtyOptions);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        qtySelect.setAdapter(adapter);
+        qtySelect.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                selectedQty = qtyOptions[i];
+                //Toast.makeText(RespondActivity.this, "Selected: " + selectedQty, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
         queue = Volley.newRequestQueue(getApplicationContext());
         Bundle extras = getIntent().getExtras();
         if (extras == null) {
@@ -471,7 +492,8 @@ public class RespondActivity extends AppCompatActivity{
                         params.put("storeLat", String.valueOf(selectedLocation.latitude));
                         params.put("storeLng", String.valueOf(selectedLocation.longitude));
 
-                        params.put("itemQty", itemQty.getText().toString().trim());
+                        //params.put("itemQty", itemQty.getText().toString().trim());
+                        params.put("itemQty", selectedQty);
                         return params;
                     }
                 };
@@ -501,13 +523,14 @@ public class RespondActivity extends AppCompatActivity{
         else
             msg = "Please enter the store name.";
 
-        // Check if location is valid
+        /*// Check if location is valid
         if (!itemQty.getText().toString().trim().equals(""))  // if custom location marker exists, set as valid
             qtyValid = true;
         else                        // if custom location marker does not exist, set warning message
             msg += "\nPlease select a location on the map.";
 
-        proceed = storeNameValid && qtyValid; // proceed will only be true if both inputs are valid
+        proceed = storeNameValid && qtyValid; // proceed will only be true if both inputs are valid*/
+        proceed = storeNameValid;
 
         if(!proceed) // if inputs are invalid, display message
             showSnackbar(-1, msg);
