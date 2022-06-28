@@ -3,6 +3,7 @@ package com.example.csc660_grpproject_where2buy.ui.request;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -22,6 +23,8 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.os.PersistableBundle;
 import android.provider.Settings;
+import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,8 +42,16 @@ import androidx.collection.ArraySet;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.example.csc660_grpproject_where2buy.MainActivity;
 import com.example.csc660_grpproject_where2buy.R;
 import com.example.csc660_grpproject_where2buy.databinding.FragmentRequestBinding;
 import com.example.csc660_grpproject_where2buy.ui.map.MapFragment;
@@ -74,6 +85,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
@@ -81,11 +93,17 @@ import com.karumi.dexter.listener.PermissionGrantedResponse;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.single.PermissionListener;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class RequestFragment extends Fragment implements OnMapReadyCallback {
 
     private FragmentRequestBinding binding;
+    private View root;
 
     private TextView textView2, textView3, textView6;
     private EditText editText1;
@@ -101,13 +119,17 @@ public class RequestFragment extends Fragment implements OnMapReadyCallback {
     private Circle circle;
     private CircleOptions circleOption;
 
-    String URL = "";
+    private String URL = "http://csc660.allprojectcs270.com/addRequest.php";
+    private RequestQueue queue;
+
+    private String itemName, statusCode, statusMessage, userID;
+    private int areaRadius;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         RequestViewModel requestViewModel = new ViewModelProvider(this).get(RequestViewModel.class);
 
         binding = FragmentRequestBinding.inflate(inflater, container, false);
-        View root = binding.getRoot();
+        root = binding.getRoot();
 
         textView2 = binding.textView2;
         textView3 = binding.textView3;
@@ -117,15 +139,119 @@ public class RequestFragment extends Fragment implements OnMapReadyCallback {
         seekBar = binding.seekBar;
         button = binding.button;
 
+        userID = MainActivity.getUserId();
+
         supportMapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.mapView);
 
         client = LocationServices.getFusedLocationProviderClient(getContext());
 
+        circleOption = new CircleOptions();
+
         getCurrentLocation();
+
+        queue = Volley.newRequestQueue(getContext());
+
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                sendPOST();
+            }
+        });
 
         //supportMapFragment.getMapAsync(this);
 
         return root;
+    }
+
+    private void sendPOST() { // Send response to server
+        checkMyPermission();
+        if(latLng != null) {
+            //Toast.makeText(getContext(), textView6.getText().toString().replace(" KM", ""), Toast.LENGTH_SHORT).show();
+            StringRequest stringRequest = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
+                @Override
+                public void onResponse(String response) {
+                    try {
+                        JSONObject rows = new JSONObject(response);
+                        JSONObject statusJson = rows.getJSONObject("status");
+
+                        statusCode = statusJson.getString("statusCode");
+                        //statusMessage = statusJson.getString("statusMessage");
+                        switch (statusCode) {
+                            case "600": { // if query is successful
+                                showSnackbar(1,"Your request has successfully been sent.");
+                                editText1.setText("");
+                                circle.remove();
+                                seekBar.setProgress(10);
+                                getCurrentLocation();
+                                circle.remove();
+                                break;
+                            }
+                            case "610": {
+                                showSnackbar(1,"Fatal error. Please try again.");
+                                //getActivity().finish();
+                                break;
+                            }
+                            default: {
+                                break;
+                            }
+                        }
+                        // activityRespondText.setText(requestObject.toString());
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        showSnackbar(-2, "An unexpected error occurred.");
+                    }
+                }
+            }, errorListener){
+                @Nullable
+                @Override
+                protected Map<String, String> getParams() { //POST values
+                    Map<String, String> params = new HashMap<>();
+                    params.put("requesterID", MainActivity.getUserId());
+                    params.put("itemName", editText1.getText().toString().trim());
+                    params.put("requesterLat", String.valueOf(latLng.latitude));
+                    params.put("requesterLng", String.valueOf(latLng.longitude));
+                    params.put("areaRadius", textView6.getText().toString().replace(" KM", ""));
+
+                    return params;
+                }
+            };
+            if(inputsAreValid()){
+                queue.add(stringRequest);
+            }
+        }
+        else{
+            //Toast.makeText(this, "", Toast.LENGTH_SHORT).show();
+            showSnackbar(-2,"Unable to get location. Please try again later.");
+        }
+    }
+
+    private boolean inputsAreValid(){
+        boolean itemNameValid = false;
+        boolean markerOptionValid = false;
+        boolean proceed;
+        String msg = "";
+
+        // Check if store name is valid
+        if(!editText1.getText().toString().trim().equals("")) { // if input is not empty, set as valid
+            itemNameValid = true;
+        }
+        else {
+            msg = "Please enter the item name.";
+        }
+
+        if (latLng != null) {  // if user location can be retrieved, set as valid
+            markerOptionValid = true;
+        }
+        else {                        // if user location can't be retrieved, set warning message
+            msg += "Unable to get location. Please turn on location services or try again later.";
+        }
+
+        proceed = itemNameValid && markerOptionValid; // proceed will only be true if both inputs are valid
+
+        if(!proceed) // if inputs are invalid, display message
+            showSnackbar(-1, msg);
+
+        return proceed;
     }
 
     private void getCurrentLocation() {
@@ -144,8 +270,6 @@ public class RequestFragment extends Fragment implements OnMapReadyCallback {
                             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 12.9F), 10, null);
                             googleMap.addMarker(option);
                             googleMap.getUiSettings().setAllGesturesEnabled(false);
-
-                            circleOption = new CircleOptions();
 
                             circle = googleMap.addCircle(circleOption.center(latLng).radius(1000).fillColor(Color.argb(50, 16, 21, 115)).strokeColor(Color.rgb(16, 21, 115)).strokeWidth(2f));
 
@@ -250,6 +374,32 @@ public class RequestFragment extends Fragment implements OnMapReadyCallback {
         vectorDrawable.draw(canvas);
         return BitmapDescriptorFactory.fromBitmap(bitmap);
     }
+
+    private void showSnackbar(int mode, String message){
+        switch(mode){
+            case 1:{ // success snackbar
+                Snackbar.make(root, message, Snackbar.LENGTH_LONG).setBackgroundTint(getResources().getColor(com.google.android.libraries.places.R.color.quantum_googgreen)).show();
+                break;
+            } case 0:{ // info/neutral snackbar
+                Snackbar.make(root, message, Snackbar.LENGTH_SHORT).show();
+                break;
+            } case -1:{ // warn snackbar
+                Snackbar.make(root, message, Snackbar.LENGTH_LONG).setBackgroundTint(getResources().getColor(R.color.custom_orange_700)).show();
+                break;
+            } case -2:{ // error snackbar
+                Snackbar.make(root, message, Snackbar.LENGTH_LONG).setBackgroundTint(getResources().getColor(R.color.custom_error_red)).show();
+                break;
+            }
+        }
+    }
+
+    public Response.ErrorListener errorListener = new Response.ErrorListener() {
+        @Override
+        public void onErrorResponse(VolleyError error) {
+            Log.e("ERRORS", "onErrorResponse: " + error.getLocalizedMessage());
+            showSnackbar(-2,"An unexpected error occurred.");
+        }
+    };
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
