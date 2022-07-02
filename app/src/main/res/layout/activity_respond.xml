@@ -17,7 +17,7 @@
         android:theme="?attr/actionBarTheme"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/respondImageExpanded"
         app:titleTextColor="@color/white" />
 
     <!--TextView
@@ -28,28 +28,60 @@
         android:text="REPORT AVAILABLE"
         tools:layout_editor_absoluteY="400dp" /-->
 
+
+    <ImageButton
+        android:id="@+id/respondImageThumbnail"
+        android:layout_width="80dp"
+        android:layout_height="0dp"
+        android:backgroundTint="@android:color/darker_gray"
+        app:layout_constraintBottom_toTopOf="@+id/respondMap"
+        app:layout_constraintStart_toStartOf="@+id/respondToolbar"
+        app:layout_constraintTop_toBottomOf="@+id/respondToolbar"
+        app:srcCompat="@drawable/ic_baseline_image_not_supported_24" />
+
+    <ImageView
+        android:id="@+id/respondZoomInIcon"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="59dp"
+        android:layout_marginTop="19dp"
+        android:layout_marginBottom="3dp"
+        android:src="@drawable/ic_baseline_zoom_in_24"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="@+id/respondImageThumbnail"
+        app:layout_constraintEnd_toStartOf="@+id/respondItemName"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/respondItemName" />
+    <!--411dp-->
+    <ImageView
+        android:id="@+id/respondImageExpanded"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="parent"
+        app:layout_constraintEnd_toStartOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <TextView
         android:id="@+id/respondNameTitle"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:gravity="center"
-        android:text="Item Name:"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/respondToolbar" />
+        android:text="Item:"
+        app:layout_constraintStart_toEndOf="@+id/respondImageThumbnail"
+        app:layout_constraintTop_toTopOf="@+id/respondImageThumbnail" />
 
     <TextView
         android:id="@+id/respondItemName"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
         android:gravity="center"
         android:text="Getting data..."
         android:textSize="18sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/respondImageThumbnail"
         app:layout_constraintTop_toBottomOf="@+id/respondNameTitle" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -57,10 +89,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="5dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="13dp"
         android:backgroundTint="@color/custom_purple_300"
         android:clickable="true"
         android:contentDescription="Center to current location"
+        android:focusable="true"
         app:borderWidth="0dp"
         app:layout_constraintBottom_toBottomOf="@+id/respondMap"
         app:layout_constraintEnd_toEndOf="parent"
@@ -70,53 +103,55 @@
     <com.google.android.gms.maps.MapView
         android:id="@+id/respondMap"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="77dp"
-        android:layout_marginBottom="77dp"
-        app:layout_constraintBottom_toBottomOf="@+id/respondStoreNameText"
+        android:layout_height="300dp"
+        android:layout_marginTop="136dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/respondToolbar"
+        app:layout_constraintTop_toTopOf="parent"
         tools:context=".ui.respond.RespondActivity" />
 
     <Button
         android:id="@+id/sendResponseBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="54dp"
-        android:layout_marginTop="34dp"
-        android:backgroundTint="@color/custom_purple_500"
+        android:layout_marginStart="11dp"
+        android:backgroundTint="@android:color/darker_gray"
+        android:enabled="false"
         android:text="Send"
-        app:layout_constraintStart_toStartOf="@+id/respondQtySpinner"
-        app:layout_constraintTop_toBottomOf="@+id/respondQtySpinner" />
+        app:layout_constraintBaseline_toBaselineOf="@+id/respondBackBtn"
+        app:layout_constraintEnd_toStartOf="@+id/respondBackBtn"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/respondBackBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="37dp"
+        android:layout_marginTop="17dp"
+        android:layout_marginEnd="11dp"
+        android:layout_marginBottom="19dp"
         android:backgroundTint="@android:color/darker_gray"
         android:text="Go Back"
         android:textColor="@color/black"
-        app:layout_constraintBaseline_toBaselineOf="@+id/sendResponseBtn"
-        app:layout_constraintEnd_toEndOf="@+id/respondQtySpinner" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/sendResponseBtn"
+        app:layout_constraintTop_toBottomOf="@+id/respondAddImage" />
 
     <TextView
         android:id="@+id/respondLocationLabel"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="246dp"
+        android:layout_marginTop="19dp"
         android:gravity="center"
         android:text="Store Name"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/respondMap"
+        tools:layout_editor_absoluteX="-5dp" />
 
     <TextView
         android:id="@+id/respondStoreNameLabel"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="1dp"
+        android:layout_marginTop="4dp"
         android:gravity="center"
         android:text="Estimated Quantity"
         app:layout_constraintEnd_toEndOf="parent"
@@ -142,8 +177,34 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="40dp"
         android:layout_marginEnd="40dp"
+        android:layout_marginBottom="118dp"
+        app:layout_constraintBottom_toTopOf="@+id/respondAddImage"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/respondStoreNameLabel"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <ImageView
+        android:id="@+id/respondCapturedImage"
+        android:layout_width="215dp"
+        android:layout_height="142dp"
+        android:layout_marginTop="4dp"
+        android:background="@android:color/darker_gray"
+        android:scaleType="centerInside"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/respondStoreNameLabel" />
+        app:layout_constraintTop_toBottomOf="@+id/respondQtySpinner"
+        app:srcCompat="@drawable/ic_baseline_image_not_supported_24" />
+
+    <ImageButton
+        android:id="@+id/respondAddImage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/custom_purple_500"
+        app:layout_constraintBottom_toBottomOf="@+id/respondCapturedImage"
+        app:layout_constraintEnd_toEndOf="@+id/respondCapturedImage"
+        app:srcCompat="@drawable/ic_baseline_add_a_photo_24" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

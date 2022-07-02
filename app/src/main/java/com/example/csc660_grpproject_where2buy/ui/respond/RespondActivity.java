@@ -1,7 +1,9 @@
 package com.example.csc660_grpproject_where2buy.ui.respond;
 
+import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContract;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -10,23 +12,31 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -38,6 +48,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.csc660_grpproject_where2buy.BuildConfig;
 import com.example.csc660_grpproject_where2buy.MainActivity;
 import com.example.csc660_grpproject_where2buy.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -60,8 +71,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class RespondActivity extends AppCompatActivity{
     // xml vars
@@ -74,10 +89,12 @@ public class RespondActivity extends AppCompatActivity{
     private EditText storeName, itemQty;
     private Spinner qtySelect;
     private String selectedQty;
+    private ImageButton thumbnailImageButton, addImageButton;
+    private ImageView expandedImage, zoomInIcon, capturedImage;
 
     // location vars
     private FusedLocationProviderClient client;
-    private ActivityResultLauncher<String> mPermissionResult;
+    private ActivityResultLauncher<String> mPermissionResult, cameraPerms;
     private LatLng currentLatLng, selectedLocation;
     private GoogleMap map;
     //private Marker selectedLocation;
@@ -94,12 +111,18 @@ public class RespondActivity extends AppCompatActivity{
     private int requestID, responderID;
     private View view;
 
+    // misc
     private ActionBar actionBar;
+    private boolean firstLaunch;
+    private Uri imageUri;
+    private Bitmap imageBitmap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_respond);
+
+        firstLaunch = true;
 
         // Setup action bar
         view = getWindow().findViewById(android.R.id.content);
@@ -165,6 +188,22 @@ public class RespondActivity extends AppCompatActivity{
                 }
             }
         );
+
+        cameraPerms = registerForActivityResult(
+            new ActivityResultContracts.RequestPermission(),
+            new ActivityResultCallback<Boolean>() {
+                @Override
+                public void onActivityResult(Boolean result) {
+                    if(!result){ //if permission is rejected
+                        // toast or something
+                        // make submit button say please enable location
+                        //Toast.makeText(getApplicationContext(), "Please enable location services, then refresh the map", Toast.LENGTH_SHORT).show();
+                        //showSnackbar(0, "Please enable location services, then refresh the map");
+                        //Log.i("CUSTOM", "onClick: denied clicked");
+                    }
+                }
+            }
+        );
         cancelBtn = findViewById(R.id.respondBackBtn);
         cancelBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -184,6 +223,51 @@ public class RespondActivity extends AppCompatActivity{
                 }
             }
         });*/
+
+        //  Initialize xml vars
+        thumbnailImageButton = findViewById(R.id.respondImageThumbnail);
+        expandedImage = findViewById(R.id.respondImageExpanded);
+        zoomInIcon = findViewById(R.id.respondZoomInIcon);
+
+        capturedImage = findViewById(R.id.respondCapturedImage);
+        addImageButton = findViewById(R.id.respondAddImage);
+
+
+        //imageUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", file);
+        ActivityResultLauncher<Intent> mResultLauncher =
+            registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                new ActivityResultCallback<ActivityResult>() {
+                    @Override
+                    public void onActivityResult(ActivityResult result) {
+                        capturedImage.setImageURI(imageUri);
+                        capturedImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    }
+                }
+            );
+
+        addImageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent captureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                if(ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED){
+                    File file = null;
+                    try {
+                        file = File.createTempFile(UUID.randomUUID().toString(), ".jpg", getCacheDir());
+                    } catch (IOException e) {
+                        Log.e("FILE", e.getMessage());
+                    }
+                    imageUri = FileProvider.getUriForFile(getApplicationContext(), "com.example.csc660_grpproject_where2buy.FileProvider", file);
+                    Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+                    mResultLauncher.launch(cameraIntent);
+                    //startActivityForResult(captureIntent, 1);
+                }else{
+                    cameraPerms.launch(Manifest.permission.CAMERA);
+                }
+
+            }
+        });
 
         // Initialize stuff for POST
         storeName = findViewById(R.id.respondStoreNameText);
@@ -269,7 +353,13 @@ public class RespondActivity extends AppCompatActivity{
                     .title("Drag to change position")
                     .icon(bitmapDescriptorFromVector(getApplicationContext(), R.drawable.ic_baseline_location_on_24));
             location = map.addMarker(options);
-            map.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 17));
+            //map.animateCamera(CameraUpdateFactory.newLatLng(currentLatLng));
+            if(firstLaunch){
+                map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng,17));
+                firstLaunch = false;
+            }
+            else
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 17));
             //map.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition(currentLatLng, 17, 0, 0)));
 
             map.setOnCameraMoveStartedListener(new GoogleMap.OnCameraMoveStartedListener() {
@@ -404,6 +494,12 @@ public class RespondActivity extends AppCompatActivity{
 
                             //requestObject = new RequestsNearby(requestID, itemName, requestDateString);
 
+                            /** TO-DO: get image from database, allow responder to also capture image and upload */
+                            /*if image exists{
+                                imageButton.setImageBitmap(); // set thumbnail image
+                                expandedImage.setImageBitmap(); // set full size image
+                                zoomInIcon.setVisibility(View.VISIBLE);
+                            }*/
                             itemNameText.setText(itemName);
                             Log.i("CUSTOM", "code 600");
                             break;
@@ -433,6 +529,16 @@ public class RespondActivity extends AppCompatActivity{
         } else {
             Log.e("ERRORS", "stringRequest is null");
         }
+    }
+
+
+    // from https://stackoverflow.com/a/38796456
+    private String getStringImage(Bitmap bmp){
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] imageBytes = baos.toByteArray();
+        String encodedImage = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+        return encodedImage;
     }
 
     private void sendPOST(){ // Send request to server
@@ -486,7 +592,7 @@ public class RespondActivity extends AppCompatActivity{
                         Map<String, String> params = new HashMap<>();
                         params.put("requestID", String.valueOf(requestID));
                         params.put("responderID", MainActivity.getUserId());
-                        params.put("storeName", storeName.getText().toString().trim());
+                        //params.put("storeName", storeName.getText().toString().trim());
 
                         //Stored in db currently: request id, responder user id, store name, lat, lng, item count
                         params.put("storeLat", String.valueOf(selectedLocation.latitude));
