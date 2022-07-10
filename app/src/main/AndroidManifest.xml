@@ -36,6 +36,7 @@
             android:name=".ui.respond.RespondActivity"
             android:exported="false" />
         <activity
+            android:theme="@style/Theme.AppCompat.Starting"
             android:name=".LoginActivity"
             android:exported="true">
             <intent-filter>

@@ -2,6 +2,7 @@ package com.example.csc660_grpproject_where2buy;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.splashscreen.SplashScreen;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -40,6 +41,7 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //int RC_SIGN_IN = 1;
+        SplashScreen.installSplashScreen(this);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);

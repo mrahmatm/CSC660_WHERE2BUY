@@ -16,4 +16,18 @@
         <item name="fontFamily">@font/metropolis_regularr</item>
         <item name="android:textColor">@color/custom_text_color</item>
     </style>
+
+    <style name="Theme.AppCompat.Starting" parent="Theme.SplashScreen">
+        <!-- Set the splash screen background, animated icon, and animation duration. -->
+        <item name="windowSplashScreenBackground">@color/custom_dark_blue</item>
+
+        <!-- Use windowSplashScreenAnimatedIcon to add either a drawable or an
+             animated drawable. One of these is required. -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/where2buy_icon_noshadow</item>
+
+        <!-- Set the theme of the Activity that directly follows your splash screen. -->
+        <!-- Required -->
+        <item name="postSplashScreenTheme">@style/Theme.MaterialComponents.DayNight.NoActionBar</item>
+
+    </style>
 </resources>
