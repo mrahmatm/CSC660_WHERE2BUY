@@ -3,8 +3,11 @@ package com.example.csc660_grpproject_where2buy.ui.respond;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -67,7 +70,7 @@ public class RespondFragment extends Fragment {
     ListView lv;
     ArrayAdapter adapter;
 
-    String requesterName, itemName, areaCenterString, requestDateString, statusCode, statusMessage;
+    String requesterName, itemName, areaCenterString, requestDateString, statusCode, statusMessage, imageBase64;
     int requestID;
     ArrayList<RequestsNearby> requestsNearby;
     ArrayList<String> msg;
@@ -188,18 +191,23 @@ public class RespondFragment extends Fragment {
                             }
                             // retrieve data from json
                             for(int i = 0; i < resultJson.length(); i++){
-                                requestID = resultJson.getJSONObject(i).getInt("requestID");
-                                itemName = resultJson.getJSONObject(i).getString("itemName");
-                                requestDateString = resultJson.getJSONObject(i).getString("requestDate");
+                                Bitmap image = null;
+                                JSONObject jsonObject = resultJson.getJSONObject(i);
+                                requestID = jsonObject.getInt("requestID");
+                                itemName = jsonObject.getString("itemName");
+                                requestDateString = jsonObject.getString("requestDate");
+                                imageBase64 = jsonObject.getString("imageBase64");
 
-                                requestObject = new RequestsNearby(requestID, itemName, requestDateString);
+                                if( !imageBase64.trim().equals("") ) {
+                                    Log.i("ib64", "onResponse: imageBase64 is not null");
+                                    // decoding base64 from https://stackoverflow.com/a/4837293
+                                    byte[] decodedString = Base64.decode(imageBase64, Base64.DEFAULT);
+                                    image = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                                }
+                                requestObject = new RequestsNearby(requestID, itemName, requestDateString, image);
 
                                 requestsNearby.add(requestObject);
                                 msg.add(i, requestsNearby.get(i).toString());
-
-                                //ImageButton imageButton =   R.id.respondButton;
-                                //imageButton.setOnClickListener();
-
                             }
                             if(getView() != null){ // only do setAdapter if getView != null to prevent crashing if user switches between fragments too quickly
                                 adapter2 = new ListViewRespond(getContext(), requestsNearby, userID);
@@ -215,7 +223,7 @@ public class RespondFragment extends Fragment {
                     adapter.notifyDataSetChanged();
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    msg.add(0, msg.get(0) + "\n\nJSONException: " + e.getMessage());
+                    msg.add(0, "\n\nJSONException: " + e.getMessage());
                 }
             }
         }, errorListener){ //POST parameters

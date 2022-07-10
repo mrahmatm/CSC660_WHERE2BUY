@@ -3,7 +3,6 @@ package com.example.csc660_grpproject_where2buy.ui.respond;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContract;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,22 +14,30 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Point;
+import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -42,13 +49,13 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.example.csc660_grpproject_where2buy.BuildConfig;
 import com.example.csc660_grpproject_where2buy.MainActivity;
 import com.example.csc660_grpproject_where2buy.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -91,6 +98,7 @@ public class RespondActivity extends AppCompatActivity{
     private String selectedQty;
     private ImageButton thumbnailImageButton, addImageButton;
     private ImageView expandedImage, zoomInIcon, capturedImage;
+    private View thumbnailView;
 
     // location vars
     private FusedLocationProviderClient client;
@@ -107,7 +115,7 @@ public class RespondActivity extends AppCompatActivity{
     private RequestQueue queue;
 
     // normal vars
-    private String itemName, statusCode, statusMessage;
+    private String itemName, imageBase64, statusCode, statusMessage;
     private int requestID, responderID;
     private View view;
 
@@ -115,12 +123,16 @@ public class RespondActivity extends AppCompatActivity{
     private ActionBar actionBar;
     private boolean firstLaunch;
     private Uri imageUri;
-    private Bitmap imageBitmap;
+    private Bitmap capturedImageBitmap, requestImageBitmap;
+    private int shortAnimationDuration;
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_respond);
+
+        shortAnimationDuration = getResources().getInteger(android.R.integer.config_shortAnimTime);
+        thumbnailView = findViewById(R.id.respondImageThumbnail);
 
         firstLaunch = true;
 
@@ -155,14 +167,6 @@ public class RespondActivity extends AppCompatActivity{
         itemNameText = findViewById(R.id.respondItemName);
 
         // Setup buttons
-        sendBtn = findViewById(R.id.sendResponseBtn);
-        sendBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sendPOST();
-            }
-        });
-
         refreshBtn = findViewById(R.id.respondRefreshBtn);
         refreshBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -171,6 +175,16 @@ public class RespondActivity extends AppCompatActivity{
             }
         });
 
+        sendBtn = findViewById(R.id.sendResponseBtn);
+        sendBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                sendPOST();
+                disableButton(sendBtn);
+                refreshBtn.setClickable(false);
+                map.getUiSettings().setScrollGesturesEnabled(false);
+            }
+        });
 
         // Get permission prompt with callback found on https://stackoverflow.com/a/66552678
         mPermissionResult = registerForActivityResult(
@@ -212,18 +226,6 @@ public class RespondActivity extends AppCompatActivity{
             }
         });
 
-        /*toggleSwitch = findViewById(R.id.respondSwitch);
-        toggleSwitch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(toggleSwitch.isChecked()){
-                    if(selectedLocation == null){
-                        showSnackbar(-1,"Please select a location on the map.");
-                    }
-                }
-            }
-        });*/
-
         //  Initialize xml vars
         thumbnailImageButton = findViewById(R.id.respondImageThumbnail);
         expandedImage = findViewById(R.id.respondImageExpanded);
@@ -232,8 +234,7 @@ public class RespondActivity extends AppCompatActivity{
         capturedImage = findViewById(R.id.respondCapturedImage);
         addImageButton = findViewById(R.id.respondAddImage);
 
-
-        //imageUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", file);
+        // Set intent for launching camera
         ActivityResultLauncher<Intent> mResultLauncher =
             registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -242,14 +243,15 @@ public class RespondActivity extends AppCompatActivity{
                     public void onActivityResult(ActivityResult result) {
                         capturedImage.setImageURI(imageUri);
                         capturedImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                        capturedImageBitmap =  ((BitmapDrawable)capturedImage.getDrawable()).getBitmap();
                     }
                 }
             );
 
+        // Onclick, launch camera and get image
         addImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent captureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 if(ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED){
                     File file = null;
                     try {
@@ -296,21 +298,30 @@ public class RespondActivity extends AppCompatActivity{
         Bundle extras = getIntent().getExtras();
         if (extras == null) {
             //Toast.makeText(this, "An error occurred.", Toast.LENGTH_SHORT).show();
-            showSnackbar(-2,"An error occurred.");
+            Toast.makeText(this, "An error occurred.", Toast.LENGTH_LONG).show();
             finish();
         } else {
             requestID = extras.getInt("requestID");
             responderID = extras.getInt("responderID");
-            refreshMap();
             getItemDetails();
+            refreshMap();
         }
 
+    }
+
+    private void disableButton(Button button){
+        button.setEnabled(false);
+        button.setBackgroundColor(Color.GRAY);
+    }
+    private void enableButton(Button button, String color){
+        button.setEnabled(true);
+        button.setBackgroundColor(Color.parseColor(color));
     }
 
     /*      Map stuff       */
 
     private void refreshMap(){
-        showSnackbar(0, "Fetching location...");
+        //showSnackbar(0, "Fetching location...");
         if(permissionGranted()){
             @SuppressLint("MissingPermission") Task<Location> task = client.getLastLocation();
             task.addOnSuccessListener(new OnSuccessListener<Location>() {
@@ -366,9 +377,13 @@ public class RespondActivity extends AppCompatActivity{
                 @Override
                 public void onCameraMoveStarted(int i) {
                     switch(i){
-                        case 1: case 2: case 3:
-                            sendBtn.setEnabled(false);
-                            sendBtn.setBackgroundColor(Color.GRAY);
+                        case 1:
+                            disableButton(sendBtn);
+                            break;
+                        case 2:
+                        case 3:
+                            disableButton(sendBtn);
+                            map.getUiSettings().setScrollGesturesEnabled(false);
                             break;
                     }
                 }
@@ -385,8 +400,9 @@ public class RespondActivity extends AppCompatActivity{
                 @Override
                 public void onCameraIdle() {
                     selectedLocation = map.getCameraPosition().target;
-                    sendBtn.setEnabled(true);
-                    sendBtn.setBackgroundColor(Color.parseColor("#5556ba"));
+                    map.getUiSettings().setScrollGesturesEnabled(true);
+                    enableButton(sendBtn, "#5556ba");
+                    refreshBtn.setClickable(true);
                 }
             });
             // if user previously has selected a location, place the marker back on the map
@@ -439,7 +455,7 @@ public class RespondActivity extends AppCompatActivity{
     private BitmapDescriptor bitmapDescriptorFromVector(Context context, int vectoriID){
         Drawable vectorDrawable  = ContextCompat.getDrawable(context, vectoriID);
         vectorDrawable.setBounds(0, 0, vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight());
-        Bitmap bitmap=Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Bitmap bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
 
         vectorDrawable.draw(canvas);
@@ -479,6 +495,7 @@ public class RespondActivity extends AppCompatActivity{
             @Override
             public void onResponse(String response) {
                 try {
+                    Log.i("getItemDetails", "onResponse: " + response);
                     JSONObject rows = new JSONObject(response);
                     JSONObject statusJson = rows.getJSONObject("status");
                     JSONArray resultJson = rows.getJSONArray("result");
@@ -488,20 +505,33 @@ public class RespondActivity extends AppCompatActivity{
                     switch (statusCode) {
                         case "600": { // if query is successful and there are results
                             // retrieve data from json
-                            requestID = resultJson.getJSONObject(0).getInt("requestID");
-                            itemName = resultJson.getJSONObject(0).getString("itemName");
-                            //requestDateString = resultJson.getJSONObject(0).getString("requestDate");
+                            JSONObject jsonObject = resultJson.getJSONObject(0);
+                            requestID = jsonObject.getInt("requestID");
+                            itemName = jsonObject.getString("itemName");
+                            imageBase64 = jsonObject.getString("imageBase64");
 
+                            //requestDateString = resultJson.getJSONObject(0).getString("requestDate");
                             //requestObject = new RequestsNearby(requestID, itemName, requestDateString);
 
-                            /** TO-DO: get image from database, allow responder to also capture image and upload */
-                            /*if image exists{
-                                imageButton.setImageBitmap(); // set thumbnail image
-                                expandedImage.setImageBitmap(); // set full size image
-                                zoomInIcon.setVisibility(View.VISIBLE);
-                            }*/
                             itemNameText.setText(itemName);
-                            Log.i("CUSTOM", "code 600");
+                            if( !imageBase64.trim().equals("") ){ // if there is an image, display it and set onclick to expand the image
+                               // decoding base64 from https://stackoverflow.com/a/4837293
+                               byte[] decodedString = Base64.decode(imageBase64, Base64.DEFAULT);
+                               requestImageBitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+
+                               zoomInIcon.setVisibility(View.VISIBLE);
+                               expandedImage.setImageBitmap(requestImageBitmap);
+                               thumbnailImageButton.setImageBitmap(requestImageBitmap);
+                               thumbnailImageButton.setScaleType(ImageView.ScaleType.CENTER_CROP);
+
+                               //thumbnailView.setBackgroundResource(requestImageBitmap);
+                               thumbnailView.setOnClickListener(new View.OnClickListener() {
+                                   @Override
+                                   public void onClick(View view) {
+                                       zoomImageFromThumb();
+                                   }
+                               });
+                            }
                             break;
                         }
                         default: {
@@ -512,8 +542,7 @@ public class RespondActivity extends AppCompatActivity{
                     // activityRespondText.setText(requestObject.toString());
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Log.e("CUSTOM", "JSONException: " + e.getMessage());
-                    //activityRespondText.setText(response + "\n\nJSONError: " + e.getMessage());
+                    Log.e("CUSTOM", "JSONException: response is " + response);
                 }
             }}, errorListener) { //POST parameters
             @Nullable
@@ -531,11 +560,142 @@ public class RespondActivity extends AppCompatActivity{
         }
     }
 
+    // expand image animation, from https://developer.android.com/training/animation/zoom
+    private Animator currentAnimator;
+    private void zoomImageFromThumb(){
+        if(currentAnimator != null)
+            currentAnimator.cancel();
 
-    // from https://stackoverflow.com/a/38796456
-    private String getStringImage(Bitmap bmp){
+        final Rect startBounds = new Rect();
+        final Rect finalBounds = new Rect();
+        final Point globalOffset = new Point();
+
+        // The start bounds are the global visible rectangle of the thumbnail,
+        // and the final bounds are the global visible rectangle of the container
+        // view. Also set the container view's offset as the origin for the
+        // bounds, since that's the origin for the positioning animation
+        // properties (X, Y).
+
+        thumbnailView.getGlobalVisibleRect(startBounds);
+        findViewById(R.id.container)
+                .getGlobalVisibleRect(finalBounds, globalOffset);
+        startBounds.offset(-globalOffset.x, -globalOffset.y);
+        finalBounds.offset(-globalOffset.x, -globalOffset.y);
+
+        // Adjust the start bounds to be the same aspect ratio as the final
+        // bounds using the "center crop" technique. This prevents undesirable
+        // stretching during the animation. Also calculate the start scaling
+        // factor (the end scaling factor is always 1.0).
+        float startScale;
+        if ((float) finalBounds.width() / finalBounds.height()
+                > (float) startBounds.width() / startBounds.height()) {
+            // Extend start bounds horizontally
+            startScale = (float) startBounds.height() / finalBounds.height();
+            float startWidth = startScale * finalBounds.width();
+            float deltaWidth = (startWidth - startBounds.width()) / 2;
+            startBounds.left -= deltaWidth;
+            startBounds.right += deltaWidth;
+        } else {
+            // Extend start bounds vertically
+            startScale = (float) startBounds.width() / finalBounds.width();
+            float startHeight = startScale * finalBounds.height();
+            float deltaHeight = (startHeight - startBounds.height()) / 2;
+            startBounds.top -= deltaHeight;
+            startBounds.bottom += deltaHeight;
+        }
+
+        // Hide the thumbnail and show the zoomed-in view. When the animation
+        // begins, it will position the zoomed-in view in the place of the
+        // thumbnail.
+        thumbnailView.setAlpha(0f);
+        expandedImage.setVisibility(View.VISIBLE);
+
+        // Set the pivot point for SCALE_X and SCALE_Y transformations
+        // to the top-left corner of the zoomed-in view (the default
+        // is the center of the view).
+        expandedImage.setPivotX(0f);
+        expandedImage.setPivotY(0f);
+
+        // Construct and run the parallel animation of the four translation and
+        // scale properties (X, Y, SCALE_X, and SCALE_Y).
+        AnimatorSet set = new AnimatorSet();
+        set
+                .play(ObjectAnimator.ofFloat(expandedImage, View.X,
+                        startBounds.left, finalBounds.left))
+                .with(ObjectAnimator.ofFloat(expandedImage, View.Y,
+                        startBounds.top, finalBounds.top))
+                .with(ObjectAnimator.ofFloat(expandedImage, View.SCALE_X,
+                        startScale, 1f))
+                .with(ObjectAnimator.ofFloat(expandedImage,
+                        View.SCALE_Y, startScale, 1f));
+        set.setDuration(shortAnimationDuration);
+        set.setInterpolator(new DecelerateInterpolator());
+        set.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                currentAnimator = null;
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                currentAnimator = null;
+            }
+        });
+        set.start();
+        currentAnimator = set;
+
+        // Upon clicking the zoomed-in image, it should zoom back down
+        // to the original bounds and show the thumbnail instead of
+        // the expanded image.
+        final float startScaleFinal = startScale;
+        expandedImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (currentAnimator != null) {
+                    currentAnimator.cancel();
+                }
+
+                // Animate the four positioning/sizing properties in parallel,
+                // back to their original values.
+                AnimatorSet set = new AnimatorSet();
+                set.play(ObjectAnimator
+                                .ofFloat(expandedImage, View.X, startBounds.left))
+                        .with(ObjectAnimator
+                                .ofFloat(expandedImage,
+                                        View.Y,startBounds.top))
+                        .with(ObjectAnimator
+                                .ofFloat(expandedImage,
+                                        View.SCALE_X, startScaleFinal))
+                        .with(ObjectAnimator
+                                .ofFloat(expandedImage,
+                                        View.SCALE_Y, startScaleFinal));
+                set.setDuration(shortAnimationDuration);
+                set.setInterpolator(new DecelerateInterpolator());
+                set.addListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        thumbnailView.setAlpha(1f);
+                        expandedImage.setVisibility(View.GONE);
+                        currentAnimator = null;
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+                        thumbnailView.setAlpha(1f);
+                        expandedImage.setVisibility(View.GONE);
+                        currentAnimator = null;
+                    }
+                });
+                set.start();
+                currentAnimator = set;
+            }
+        });
+    }
+
+    // convert bitmap to base64, from https://stackoverflow.com/a/38796456
+    private String imageToString(Bitmap bmp){
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        bmp.compress(Bitmap.CompressFormat.JPEG, 70, baos);
         byte[] imageBytes = baos.toByteArray();
         String encodedImage = Base64.encodeToString(imageBytes, Base64.DEFAULT);
         return encodedImage;
@@ -556,16 +716,25 @@ public class RespondActivity extends AppCompatActivity{
                             //statusMessage = statusJson.getString("statusMessage");
                             switch (statusCode) {
                                 case "600": { // if query is successful
-                                    //showSnackbar(1,"Your response has successfully been sent.");
-                                    Toast.makeText(RespondActivity.this, "Your response has successfully been recorded", Toast.LENGTH_SHORT).show();
-                                    finish();
+                                    // notify successful
+                                    showSnackbar(1,"Response at " + storeName.getText() + " successfully recorded.");
+
+                                    // reset inputs to default
+                                    storeName.setText("");
+                                    capturedImage.setImageResource(R.drawable.ic_baseline_image_not_supported_24);
+                                    capturedImage.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                                    capturedImage.setBackgroundResource(android.R.color.darker_gray);
+
+                                    refreshMap();
+                                    //Toast.makeText(RespondActivity.this, "Your response has successfully been recorded", Toast.LENGTH_SHORT).show();
+                                    //finish();
                                     break;
                                 }
                                 default: {
                                     JSONObject resultJson = rows.getJSONObject("query");
                                     String query = resultJson.getString("queryFull");
                                     if(response.contains("Duplicate entry")){
-                                        statusMessage = "You have already responded to this request.";
+                                        statusMessage = "You entered a duplicate entry.";
                                     }else{
                                         Log.e("RESPOND ERROR", "onResponse: " + response);
                                         statusMessage = "An unexpected error occurred.";
@@ -578,12 +747,15 @@ public class RespondActivity extends AppCompatActivity{
                             }
                             // activityRespondText.setText(requestObject.toString());
                         } catch (JSONException e) {
-                            e.printStackTrace();
+                            Log.e("CustomError", "sendPOST onResponse: " + e.getMessage());
                             showSnackbar(-2, "An unexpected error occurred.");
                             //Log.e("CUSTOM", "JSONException: " + e.getMessage());
                             //Log.e("CUSTOM", "PHP response: " + response);
                             //activityRespondText.setText(response + "\n\nJSONError: " + e.getMessage());
                         }
+                        /*map.getUiSettings().setScrollGesturesEnabled(true);
+                        enableButton(sendBtn, "#5556ba");
+                        refreshBtn.setClickable(true);*/
                     }
                 }, errorListener){
                     @Nullable
@@ -592,7 +764,7 @@ public class RespondActivity extends AppCompatActivity{
                         Map<String, String> params = new HashMap<>();
                         params.put("requestID", String.valueOf(requestID));
                         params.put("responderID", MainActivity.getUserId());
-                        //params.put("storeName", storeName.getText().toString().trim());
+                        params.put("storeName", storeName.getText().toString().trim());
 
                         //Stored in db currently: request id, responder user id, store name, lat, lng, item count
                         params.put("storeLat", String.valueOf(selectedLocation.latitude));
@@ -600,12 +772,18 @@ public class RespondActivity extends AppCompatActivity{
 
                         //params.put("itemQty", itemQty.getText().toString().trim());
                         params.put("itemQty", selectedQty);
+
+                        params.put("imageBase64", imageToString(capturedImageBitmap));
                         return params;
                     }
                 };
+                stringRequest.setRetryPolicy(new DefaultRetryPolicy(5000, DefaultRetryPolicy.DEFAULT_MAX_RETRIES, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
                 if(inputsAreValid()){
                     queue.add(stringRequest);
                 }
+                enableButton(sendBtn, "#5556ba");
+                refreshBtn.setClickable(true);
+                map.getUiSettings().setScrollGesturesEnabled(true);
             }
             else{
                 //Toast.makeText(this, "", Toast.LENGTH_SHORT).show();
@@ -615,11 +793,15 @@ public class RespondActivity extends AppCompatActivity{
             //Toast.makeText(this, "", Toast.LENGTH_SHORT).show();
             showSnackbar(-2,"Please allow location permissions.");
         }
+
+        map.getUiSettings().setScrollGesturesEnabled(true);
+        enableButton(sendBtn, "#5556ba");
+        refreshBtn.setClickable(false);
     }
 
     private boolean inputsAreValid(){
         boolean storeNameValid = false;
-        boolean qtyValid = false;
+        boolean imageValid = false;
         boolean proceed;
         String msg = "";
 
@@ -627,16 +809,14 @@ public class RespondActivity extends AppCompatActivity{
         if(!storeName.getText().toString().trim().equals("")) // if input is not empty, set as valid
             storeNameValid = true;
         else
-            msg = "Please enter the store name.";
+            msg += "Please enter the store name.";
 
-        /*// Check if location is valid
-        if (!itemQty.getText().toString().trim().equals(""))  // if custom location marker exists, set as valid
-            qtyValid = true;
-        else                        // if custom location marker does not exist, set warning message
-            msg += "\nPlease select a location on the map.";
+        if(capturedImageBitmap != null)
+            imageValid = true;
+        else
+            msg += " Please capture an image as proof.";
 
-        proceed = storeNameValid && qtyValid; // proceed will only be true if both inputs are valid*/
-        proceed = storeNameValid;
+        proceed = storeNameValid && imageValid;
 
         if(!proceed) // if inputs are invalid, display message
             showSnackbar(-1, msg);
@@ -647,8 +827,13 @@ public class RespondActivity extends AppCompatActivity{
     public Response.ErrorListener errorListener = new Response.ErrorListener() {
         @Override
         public void onErrorResponse(VolleyError error) {
-            Log.e("ERRORS", "onErrorResponse: " + error.getLocalizedMessage());
-            showSnackbar(-2,"An unexpected error occurred.");
+            Log.e("ERRORS", "onErrorResponse: " + error.getMessage());
+            error.printStackTrace();
+            showSnackbar(-2,"An unexpected error occurred. Please try again later.");
+
+            map.getUiSettings().setScrollGesturesEnabled(true);
+            enableButton(sendBtn, "#5556ba");
+            refreshBtn.setClickable(true);
         }
     };
 

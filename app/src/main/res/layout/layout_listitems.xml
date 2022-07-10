@@ -8,19 +8,25 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:paddingBottom="3dp">
 
-        <ImageButton
+        <ImageView
+            android:id="@+id/requestListImage"
             android:layout_width="80dp"
             android:layout_height="80dp"
             android:layout_weight="0"
+            android:padding="3dp"
+            android:background="@android:color/darker_gray"
             android:src="@drawable/ic_baseline_image_not_supported_24"
+            android:scaleType="centerInside"
             />
         <TextView
             android:id="@+id/respondText"
             android:layout_weight="1"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:paddingLeft="2dp"
             android:text="TextView"
             android:textSize="16sp"
             android:background="?attr/selectableItemBackground"/>
