@@ -1,30 +1,50 @@
 package com.example.csc660_grpproject_where2buy.ui.request;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Point;
+import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.provider.Settings;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -62,8 +82,12 @@ import com.karumi.dexter.listener.single.PermissionListener;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class RequestFragment extends Fragment implements OnMapReadyCallback {
 
@@ -84,6 +108,12 @@ public class RequestFragment extends Fragment implements OnMapReadyCallback {
     private Circle circle;
     private CircleOptions circleOption;
 
+    private ImageButton addImageButton;
+    private ImageView viewImage;
+    private Uri imageUri, selectedImageUri;
+    private Bitmap selectedImageBitmap;
+    private ActivityResultLauncher<String> cameraPerms;
+
     private String URL = "http://csc660.allprojectcs270.com/addRequest.php";
     private RequestQueue queue;
 
@@ -96,13 +126,13 @@ public class RequestFragment extends Fragment implements OnMapReadyCallback {
         binding = FragmentRequestBinding.inflate(inflater, container, false);
         root = binding.getRoot();
 
-        textView2 = binding.textView2;
-        textView3 = binding.textView3;
         textView6 = binding.textView6;
         editText1 = binding.editTextTextPersonName;
         //mapView = binding.mapView;
         seekBar = binding.seekBar;
         button = binding.button;
+        addImageButton = binding.requestAddImage;
+        viewImage = binding.requestCapturedImage;
 
         userID = MainActivity.getUserId();
 
@@ -116,6 +146,15 @@ public class RequestFragment extends Fragment implements OnMapReadyCallback {
 
         queue = Volley.newRequestQueue(getContext());
 
+        //supportMapFragment.getMapAsync(this);
+
+        addImageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                imageChooser();
+            }
+        });
+
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -123,9 +162,49 @@ public class RequestFragment extends Fragment implements OnMapReadyCallback {
             }
         });
 
-        //supportMapFragment.getMapAsync(this);
-
         return root;
+    }
+
+    private void imageChooser()
+    {
+        Intent i = new Intent();
+        i.setType("image/*");
+        i.setAction(Intent.ACTION_GET_CONTENT);
+
+        launchSomeActivity.launch(i);
+    }
+
+    ActivityResultLauncher<Intent> launchSomeActivity = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    Intent data = result.getData();
+                    // do your operation from here....
+                    if (data != null && data.getData() != null) {
+                        selectedImageUri = data.getData();
+
+                        try {
+                            selectedImageBitmap = MediaStore.Images.Media.getBitmap(getContext().getContentResolver(), selectedImageUri);
+                        }
+                        catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        viewImage.setImageBitmap(selectedImageBitmap);
+                        viewImage.setImageURI(imageUri);
+                        viewImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                        selectedImageBitmap = ((BitmapDrawable)viewImage.getDrawable()).getBitmap();
+                    }
+                }
+            });
+
+    // convert bitmap to base64, from https://stackoverflow.com/a/38796456
+    private String imageToString(Bitmap bmp){
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.JPEG, 70, baos);
+        byte[] imageBytes = baos.toByteArray();
+        String encodedImage = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+        return encodedImage;
     }
 
     private void sendPOST() { // Send response to server
@@ -176,6 +255,7 @@ public class RequestFragment extends Fragment implements OnMapReadyCallback {
                     params.put("requesterLat", String.valueOf(latLng.latitude));
                     params.put("requesterLng", String.valueOf(latLng.longitude));
                     params.put("areaRadius", textView6.getText().toString().replace(" KM", ""));
+                    params.put("imageBase64", imageToString(selectedImageBitmap));
 
                     return params;
                 }

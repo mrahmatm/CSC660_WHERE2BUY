@@ -7,12 +7,42 @@
     android:background="#101573"
     tools:context=".ui.request.RequestFragment">
 
+    <FrameLayout
+        android:id="@+id/requestCaptureFrame"
+        android:layout_width="215dp"
+        android:layout_height="142dp"
+        android:layout_marginTop="2dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView7">
+
+        <ImageView
+            android:id="@+id/requestCapturedImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="4dp"
+            android:background="@android:color/darker_gray"
+            android:scaleType="centerInside"
+            app:srcCompat="@drawable/ic_baseline_image_not_supported_24" />
+
+        <ImageButton
+            android:id="@+id/requestAddImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="170dp"
+            android:layout_marginTop="100dp"
+            android:backgroundTint="@color/custom_purple_500"
+            app:layout_constraintBottom_toBottomOf="@+id/requestCapturedImage"
+            app:layout_constraintEnd_toEndOf="@+id/requestCapturedImage"
+            app:srcCompat="@drawable/ic_baseline_add_a_photo_24" />
+    </FrameLayout>
+
     <TextView
         android:id="@+id/textView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="36dp"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="20dp"
         android:text="Item"
         android:textColor="#FFFFFF"
         android:textStyle="bold"
@@ -31,6 +61,18 @@
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/textView2"
         app:layout_constraintTop_toBottomOf="@+id/editTextTextPersonName" />
+
+    <TextView
+        android:id="@+id/textView7"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="20dp"
+        android:text="Item Image (optional)"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="@+id/textView2"
+        app:layout_constraintTop_toBottomOf="@+id/seekBar" />
 
     <EditText
         android:id="@+id/editTextTextPersonName"
@@ -54,13 +96,14 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView2" />
+        app:layout_constraintTop_toBottomOf="@+id/textView2"
+        tools:ignore="TouchTargetSizeCheck" />
 
     <SeekBar
         android:id="@+id/seekBar"
         android:layout_width="310dp"
-        android:layout_height="30dp"
-        android:layout_marginTop="30dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="20dp"
         android:layout_marginEnd="5dp"
         android:progressTint="#D8DFFE"
         android:thumbTint="#D8DFFE"
@@ -71,19 +114,18 @@
     <Button
         android:id="@+id/button"
         android:layout_width="161dp"
-        android:layout_height="48dp"
-        android:layout_marginTop="10dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="30dp"
         android:backgroundTint="#D8DFFE"
-        android:text="Submit"
+        android:text="Send"
         android:textColor="#000000"
         android:textSize="13sp"
         android:textStyle="bold"
         app:cornerRadius="30sp"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/seekBar" />
+        app:layout_constraintTop_toBottomOf="@+id/requestCaptureFrame" />
 
     <TextView
         android:id="@+id/textView5"
@@ -98,10 +140,10 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <fragment
-        class="com.google.android.gms.maps.SupportMapFragment"
         android:id="@+id/mapView"
+        class="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="wrap_content"
-        android:layout_height="360dp"
+        android:layout_height="330dp"
         android:layout_marginTop="2dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
