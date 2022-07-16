@@ -39,6 +39,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.example.csc660_grpproject_where2buy.MainActivity;
 import com.example.csc660_grpproject_where2buy.R;
 import com.example.csc660_grpproject_where2buy.RequestsNearby;
@@ -46,6 +47,7 @@ import com.example.csc660_grpproject_where2buy.databinding.FragmentMapBinding;
 import com.example.csc660_grpproject_where2buy.map.MapViewModel;
 import com.example.csc660_grpproject_where2buy.ui.respond.ListViewRespond;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -79,7 +81,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     SupportMapFragment supportMapFragment;
     private FusedLocationProviderClient client;
     private MarkerOptions option;
-    private final String getMyItemDetails = "http://csc660.allprojectcs270.com/getRequest.php";
+    private final String url = "http://csc660.allprojectcs270.com/getMyRequestList.php";
     private String itemName, imageBase64, statusCode, statusMessage;
     private int requestID, responderID;
     private TextView itemNameText;
@@ -116,11 +118,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         // get values
         userName = MainActivity.getUserName();
         userID = MainActivity.getUserId();
+        Log.d("DETECT GOOGLE ID?", "current user id: " + userID);
         lv = binding.lvMyReq;
+        requestsNearby = new ArrayList<RequestsNearby>(1);
+        msg = new ArrayList<String>(1);
+
         //textView.setText("Hello, " + userName);
         adapter = new ArrayAdapter(getContext(), android.R.layout.simple_list_item_1, msg);
+
         View view = inflater.inflate(R.layout.fragment_map, container, false);
+
         //mUserListRecyclerView = view.findViewById(R.id.user_list_recycler_view);
+
         mMapView = view.findViewById(R.id.nearbySearchMap);
         //getCurrentLocation();
         //initUserListRecyclerView();
@@ -140,7 +149,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                     }
                 }
         );
-
+        client = LocationServices.getFusedLocationProviderClient(getContext());
+        queue = Volley.newRequestQueue(getContext());
+        refresh();
         return view;
     }
 
@@ -166,7 +177,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                 public void onSuccess(final Location location) {
                     if (location != null) {
                         msg.set(0, "test");
-                        currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                        //currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
                         sendRequest();
                     } else {
                         msg.set(0, "Unable to retrieve location.\n\nTurn on location services or try again later.");
@@ -185,7 +196,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     private void sendRequest(){
         //Log.e("RESPONSE", "sendRequest: entered");
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, getMyItemDetails, new Response.Listener<String>() {
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 //textView.setText(response);
@@ -194,7 +205,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                     JSONObject rows = new JSONObject(response);
                     JSONObject statusJson = rows.getJSONObject("status");
                     JSONArray resultJson = rows.getJSONArray("result");
-
+                    Log.d("REQUEST STATUS?", "status: " + statusJson);
+                    Log.d("REQUEST RESULT?", "results: " + resultJson);
+                    Log.d("RESULT LENGTH?", "is null?: " + resultJson.isNull(0));
                     statusCode = statusJson.getString("statusCode");
                     statusMessage = statusJson.getString("statusMessage");
                     switch (statusCode){
@@ -209,8 +222,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                                 Bitmap image = null;
                                 JSONObject jsonObject = resultJson.getJSONObject(i);
                                 requestID = jsonObject.getInt("requestID");
+                                Log.d("RESULT CONTENT?", "index: " +i + " current requestID: " + requestID);
                                 itemName = jsonObject.getString("itemName");
+                                Log.d("RESULT CONTENT?", "index: " +i + " current itemName: " + itemName);
                                 requestDateString = jsonObject.getString("requestDate");
+                                Log.d("RESULT CONTENT?", "index: " +i + " current requestDate: " + requestDateString);
                                 imageBase64 = jsonObject.getString("imageBase64");
 
                                 if( !imageBase64.trim().equals("") ) {
@@ -220,14 +236,16 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                                     image = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
                                 }
                                 requestObject = new RequestsNearby(requestID, itemName, requestDateString, image);
-
-                                //requestsNearby.add(requestObject);
+                                Log.d("OBJECT?", "index: " +i + " current object: " + requestObject.toString());
+                                requestsNearby.add(requestObject);
                                 msg.add(i, requestsNearby.get(i).toString());
+                                Log.d("ARRAY CONTENT?", "index: " +i + " content: " + msg.get(i));
                             }
                             if(getView() != null){ // only do setAdapter if getView != null to prevent crashing if user switches between fragments too quickly
                                 adapter2 = new ListViewRespond(getContext(), requestsNearby, userID);
                                 lv.setAdapter(adapter2);
                                 lv.setEnabled(true); // Re-enable to allow clicking
+                                //adapter.notifyDataSetChanged();
                             }
                             break;
                         } default:{
@@ -247,6 +265,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                 Map<String, String> params = new HashMap<>();
                 //params.put("responderLat", String.valueOf(currentLatLng.latitude));
                 //params.put("responderLng", String.valueOf(currentLatLng.longitude));
+                params.put("googleID", userID.toString());
                 return params;
             }
         };
