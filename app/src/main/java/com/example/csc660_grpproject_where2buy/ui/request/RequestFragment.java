@@ -228,6 +228,8 @@ public class RequestFragment extends Fragment implements OnMapReadyCallback {
                                 seekBar.setProgress(10);
                                 getCurrentLocation();
                                 circle.remove();
+                                viewImage.setImageBitmap(null);
+                                selectedImageBitmap = null;
                                 break;
                             }
                             case "610": {
