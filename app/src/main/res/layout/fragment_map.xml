@@ -10,18 +10,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:layout_weight="40"
-        android:weightSum="100"
+        android:layout_weight="25"
+        android:weightSum="80"
         android:layout_marginTop="15dp">
-        <SearchView
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:id="@+id/sv_search"
-            android:queryHint="Search"
-            android:iconifiedByDefault="false"
-            android:layout_margin="10dp"
-            android:elevation="5dp"
-            android:layout_weight="20"/>
+
         <fragment
             android:id="@+id/nearbySearchMap"
             class="com.google.android.gms.maps.SupportMapFragment"
@@ -30,18 +22,7 @@
             android:layout_weight="80"/>
 
     </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="60">
 
-        <Button
-            android:id="@+id/btnGoToMyReqs"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="View My Requests" />
-    </LinearLayout>
     <ProgressBar
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

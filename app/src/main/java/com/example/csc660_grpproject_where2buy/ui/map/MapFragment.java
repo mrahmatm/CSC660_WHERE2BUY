@@ -27,6 +27,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -63,6 +64,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -90,10 +92,16 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private View root;
     private SupportMapFragment supportMapFragment;
     private FusedLocationProviderClient client;
+    private String userID;
 
     LatLng latLng;
-    private MarkerOptions option;
+    private MarkerOptions option, newMarker;
     LatLng currentLocation;
+
+    GoogleMap mMap;
+    private Marker currentMarker;
+
+    JSONArray resultArray;
 
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -102,13 +110,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                 new ViewModelProvider(this).get(MapViewModel.class);
 
         binding = FragmentMapBinding.inflate(inflater, container, false);
+        userID = MainActivity.getUserId();
         root = binding.getRoot();
         supportMapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.nearbySearchMap);
         client = LocationServices.getFusedLocationProviderClient(getContext());
         getCurrentLocation();
         //Log.d("?current location: ", latLng.toString());
         mQueue = Volley.newRequestQueue(getContext());
-        jsonParse();
+        //putMarkers();
         return root;
     }
 
@@ -133,10 +142,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             public void onSuccess(Location location) {
                 if (location != null) {
                     currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                    jsonParse();
+
+                    //putMarkers();
                     supportMapFragment.getMapAsync(new OnMapReadyCallback() {
                         @Override
                         public void onMapReady(@NonNull GoogleMap googleMap) {
-
+                            mMap = googleMap;
                             Log.d("gcl?current location: ", currentLocation.toString());
                             //currentLocation= new LatLng(location.getLatitude(), location.getLongitude());
                             option = new MarkerOptions().position(currentLocation).icon(bitmapDescriptorFromVector(getContext().getApplicationContext(), R.drawable.ic_baseline_my_location_24_blue)).anchor(0.5f, 0.5f);;
@@ -148,6 +160,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                         }
                     });
                 }
+
             }
         });
         //return  latLng;
@@ -191,7 +204,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     private void jsonParse() {
        // Log.d("?current location: ", latLng.toString());
-        String url = "http://csc660.allprojectcs270.com/getRequestList.php";
+        String url = "http://csc660.allprojectcs270.com/getRequestLocation.php";
 
         StringRequest request = new StringRequest(Request.Method.POST, url,
                 new Response.Listener<String>() {
@@ -204,23 +217,29 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                             Log.d("?RESULT STATUS CODE: ", statusCode);
 
                             JSONArray jsonArray = rows.getJSONArray("result");
+                            resultArray = jsonArray;
+                            //putMarkers(jsonArray);
                             if (jsonArray.length() <= 0){
                                 Log.d("?RESULT STATUS: ", "THERE'S NO RESULT");
+                                showSnackbar(0, "There are no requests nearby");
                             }
                             for (int i = 0; i < jsonArray.length(); i++) {
                                 JSONObject request = jsonArray.getJSONObject(i);
 
                                 String requestID = request.getString("requestID");
-                                String displayName = request.getString("displayName");
+                                String displayName = request.getString("requesterName");
                                 String itemName = request.getString("itemName");
-                                String distanceFromCenter = request.getString("distance_in_km");
+                                //String distanceFromCenter = request.getString("distance_in_km");
                                 String requestDate = request.getString("requestDate");
+                                String areaCenterLat = request.getString("areaCenterLat");
+                                String areaCenterLng = request.getString("areaCenterLng");
                                 String imageBase64 = request.getString("imageBase64");
 
 
                                 //mTextViewResult.append(firstName + ", " + String.valueOf(age) + ", " + mail + "\n\n");
                                 Log.d("?resultofFetch: ", requestID+", "+displayName);
                             }
+                            putMarkers();
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -247,6 +266,68 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         else
             Log.e("?RESPONSE", "stringRequest is null");
 
+        //putMarkers();
 
+    }
+
+    private void putMarkers(){
+        //jsonParse();
+        int n = 0;
+        LatLng currentPosition;
+        String currentLat, currentLng;
+        while(n < resultArray.length()){
+            try {
+                currentLat = resultArray.getJSONObject(n).getString("areaCenterLat");
+                currentLng= resultArray.getJSONObject(n).getString("areaCenterLng");
+                currentPosition = new LatLng(Double.parseDouble(currentLat), Double.parseDouble(currentLng));
+                newMarker = new MarkerOptions().position(currentPosition).snippet(resultArray.getJSONObject(n).getString("requestID")).icon(bitmapDescriptorFromVector(getContext().getApplicationContext(), R.drawable.where2buy_icon_noshadow_tiny)).anchor(0.5f, 0.5f);
+                //newMarker;
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            currentMarker = mMap.addMarker(newMarker);
+            n++;
+        }
+        mMap.addMarker(newMarker);
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(@NonNull Marker marker) {
+                Intent intent = new Intent(getContext(), ViewRequest.class);
+
+                String currentSnippet = marker.getSnippet();
+                Log.d("?test", "?snippet dalam event: "+ currentSnippet);
+                intent.putExtra("id", currentSnippet);
+                intent.putExtra("currentUser", userID);
+
+                startActivity(intent);
+                return false;
+            }
+        });
+    }
+
+    /*
+    @Override
+    public Boolean onMarkerClick(final Marker marker){
+        showSnackbar(0, "clicked!");
+
+        return false;
+    }*/
+
+    private void showSnackbar(int mode, String message){
+        switch(mode){
+            case 1:{ // success snackbar
+                Snackbar.make(root, message, Snackbar.LENGTH_LONG).setBackgroundTint(getResources().getColor(com.google.android.libraries.places.R.color.quantum_googgreen)).show();
+                break;
+            } case 0:{ // info/neutral snackbar
+                Snackbar.make(root, message, Snackbar.LENGTH_SHORT).show();
+                break;
+            } case -1:{ // warn snackbar
+                Snackbar.make(root, message, Snackbar.LENGTH_LONG).setBackgroundTint(getResources().getColor(R.color.custom_orange_700)).show();
+                break;
+            } case -2:{ // error snackbar
+                Snackbar.make(root, message, Snackbar.LENGTH_LONG).setBackgroundTint(getResources().getColor(R.color.custom_error_red)).show();
+                break;
+            }
+        }
     }
 }

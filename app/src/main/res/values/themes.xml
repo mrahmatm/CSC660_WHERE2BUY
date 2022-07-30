@@ -30,4 +30,12 @@
         <item name="postSplashScreenTheme">@style/Theme.MaterialComponents.DayNight.NoActionBar</item>
 
     </style>
+    <style name="Theme.CSC660_GRPPROJECT_WHERE2BUY.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+    <style name="Theme.CSC660_GRPPROJECT_WHERE2BUY.AppBarOverlay"
+        parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="Theme.CSC660_GRPPROJECT_WHERE2BUY.PopupOverlay"
+        parent="ThemeOverlay.AppCompat.Light" />
 </resources>
