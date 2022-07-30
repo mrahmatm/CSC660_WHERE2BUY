@@ -22,8 +22,9 @@
             android:layout_margin="10dp"
             android:elevation="5dp"
             android:layout_weight="20"/>
-        <com.google.android.gms.maps.MapView
+        <fragment
             android:id="@+id/nearbySearchMap"
+            class="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="80"/>
@@ -33,10 +34,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="60">
-        <ListView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/lvMyReq"/>
+
+        <Button
+            android:id="@+id/btnGoToMyReqs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="View My Requests" />
     </LinearLayout>
     <ProgressBar
         android:layout_width="wrap_content"

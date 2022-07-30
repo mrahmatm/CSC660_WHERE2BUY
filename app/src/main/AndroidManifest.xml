@@ -7,8 +7,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
 
-
-
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -17,28 +15,31 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CSC660_GRPPROJECT_WHERE2BUY"
         android:usesCleartextTraffic="true">
+        <activity
+            android:name=".myReqList1"
+            android:exported="false" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
 
         <provider
-            android:authorities="com.example.csc660_grpproject_where2buy.FileProvider"
             android:name="androidx.core.content.FileProvider"
+            android:authorities="com.example.csc660_grpproject_where2buy.FileProvider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/paths"></meta-data>
+                android:resource="@xml/paths" />
         </provider>
 
         <activity
             android:name=".ui.respond.RespondActivity"
             android:exported="false" />
         <activity
-            android:theme="@style/Theme.AppCompat.Starting"
             android:name=".LoginActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.Starting">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -48,7 +49,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"></activity>
+            android:label="@string/app_name" />
     </application>
 
 </manifest>

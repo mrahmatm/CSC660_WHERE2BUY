@@ -95,8 +95,8 @@ public class RespondFragment extends Fragment {
         textView = binding.textView;
         refreshBtn = binding.refreshBtn;
         lv = binding.lv;
+        
         requestsNearby = new ArrayList<RequestsNearby>(1);
-
         msg = new ArrayList<String>(1);
         adapter = new ArrayAdapter(getContext(), android.R.layout.simple_list_item_1, msg);
         //lv.setAdapter(adapter);
