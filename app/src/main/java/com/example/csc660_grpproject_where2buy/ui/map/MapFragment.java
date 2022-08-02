@@ -86,7 +86,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback {
-    private static final String MAPVIEW_BUNDLE_KEY = "AIzaSyCy7mWzBosyA5FFiDb39J7c4Orp0SatpEM";
+    private static final String MAPVIEW_BUNDLE_KEY = "AIzaSyDPanVZ-l3xEUGNQHUD30P08eXtQeHHv0Q";
 
     private FragmentMapBinding binding;
     private View root;
